@@ -1,5 +1,4 @@
-**Required Libraries (Python Dependencies):
-**
+Required Libraries (Python Dependencies)
 You will need to install the following Python libraries using pip (Python's package installer):
 
 google-generativeai: For interacting with the Google Gemini API.
