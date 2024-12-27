@@ -4,16 +4,18 @@ You will need to install the following Python libraries using pip (Python's pack
 google-generativeai: For interacting with the Google Gemini API.
 
 pip install google-generativeai
+
 Use code with caution.
 Bash
 tkinter (usually comes with Python but may need installing separately): For creating the graphical user interface (GUI).
 
 pip install tk
-Use code with caution.
+
 Bash
 googletrans==4.0.0-rc1: For translating text between different languages (specifically for Nepali). This is an older version of the googletrans library, so make sure to install that specific version.
 
 pip install googletrans==4.0.0-rc1
+
 Use code with caution.
 Bash
 python-docx: For creating and exporting documents in the DOCX format.
