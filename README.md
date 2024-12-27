@@ -1,68 +1,31 @@
-Required Libraries (Python Dependencies)
-You will need to install the following Python libraries using pip (Python's package installer):
+# STEAM Integration Generator
 
-google-generativeai: For interacting with the Google Gemini API.
+A Python-based application using the Google Gemini API to generate creative STEAM (Science, Technology, Engineering, Arts, Mathematics) integration ideas for lesson planning.
 
-pip install google-generativeai
+## Features
 
-Use code with caution.
-Bash
-tkinter (usually comes with Python but may need installing separately): For creating the graphical user interface (GUI).
+- **AI-Powered Ideas:** Generates STEAM integration ideas using the Google Gemini API.
+- **Multi-Language Output:** Supports output in both English and Nepali.
+- **Formatted Output:** Uses headings, subheadings, and italics for better readability.
+- **Export to DOCX:** Allows users to export generated ideas to a `.docx` file.
+- **Usage History:** Keeps a record of the last 5 uses.
+- **Custom UI:** A user-friendly GUI with a custom title bar.
 
-pip install tk
+## Setup
 
-Bash
-googletrans==4.0.0-rc1: For translating text between different languages (specifically for Nepali). This is an older version of the googletrans library, so make sure to install that specific version.
+1.  **Clone the repository.**
+2.  **Install the dependencies:** See [the project wiki](https://github.com/everywhereattheendofscience/steam-integration-generator/wiki) for detailed steps.
+3.  **Obtain a Google Gemini API key:** See [the project wiki](https://github.com/everywhereattheendofscience/steam-integration-generator/wiki) for detailed instructions.
+4.  **Run the application.**
 
-pip install googletrans==4.0.0-rc1
+## Usage
 
-Use code with caution.
-Bash
-python-docx: For creating and exporting documents in the DOCX format.
+Enter your topic, learning outcomes, age group, and preferred language to generate STEAM ideas, and see the results on the text box below.  You can also export to docs or clear all using the buttons on the GUI.
+A complete step by step guide can be found in [the project wiki](https://github.com/everywhereattheendofscience/steam-integration-generator/wiki).
 
-pip install python-docx
-Use code with caution.
-Bash
-collections
+## Contributing
 
-This is a standard library and you do not need to install it using pip.
+Contributions are welcome! See the project wiki for more information.
 
-How to Install:
-
-Open your Terminal or Command Prompt.
-
-Run the pip install commands one by one as shown above. If you have pip version 23.3 or above you will not have any problems installing these libraries using pip. If you have older version you may want to upgrade to the new version by running pip install --upgrade pip.
-
-Ensure you are installing in the right environment:
-
-Make sure that you are installing all these libraries in the right python environment.
-
-If you are using venv then make sure the venv is activated before running the install commands.
-
-Why These Libraries Are Needed:
-
-google-generativeai: Connects your code with the Gemini API. This is needed for the AI part, to generate the STEAM integration ideas using the given input.
-
-tkinter: Creates the graphical user interface (windows, labels, text input boxes, buttons etc.), allowing users to interact with your application.
-
-googletrans: Provides the translation functionality to convert the output to other languages, specifically to Nepali.
-
-python-docx: Allows you to create, modify, and save Microsoft Word documents in .docx format, which is needed for the export to docs feature.
-
-collections : This module contains the deque function that is being used to store history. This is usually part of the standard python installation, so you do not need to explicitly install this using pip.
-
-For Developers:
-
-If you are using GitHub, then make sure to include the requirements in the requirements.txt file by using this command pip freeze > requirements.txt, so others can install the libraries required by the project using pip install -r requirements.txt.
-
-Important Note:
-
-Version Specifics: The version of the googletrans library is very important, so please install the version 4.0.0-rc1.
-
-Environment: Make sure you install these in your desired Python environment, or use a virtual environment (venv) to manage your packages.
-
-Internet Access: You need an active internet connection to install these libraries using pip. You also need internet connection to use the Gemini API.
-
-Error: If the installation of any of these libraries is problematic, then try upgrading your pip using pip install --upgrade pip and try again.
-
-By installing these dependencies, you will be able to run the application and test its functionalities without any problems. Let me know if you have further questions!
+## License
+MIT License
