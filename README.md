@@ -18,6 +18,7 @@ A Python-based application using the Google Gemini API to generate creative STEA
 3.  **Obtain a Google Gemini API key:** See [the project wiki](https://github.com/everywhereattheendofscience/steam-integration-generator/wiki) for detailed instructions.
 4.  **Run the application.**
 
+## If you have the dependencies installed and also have your API ready, you can directly run the application by extracting the .exe file named 'STEAM' from [here](https://drive.google.com/file/d/1Iw6Fj8IQQYnAXmY1L-uvcQRS3QenjTMb/view?usp=sharing) 
 ## Usage
 
 Enter your topic, learning outcomes, age group, and preferred language to generate STEAM ideas, and see the results on the text box below.  You can also export to docs or clear all using the buttons on the GUI.
