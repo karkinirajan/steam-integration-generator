@@ -8,6 +8,8 @@ from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.style import WD_STYLE_TYPE
 from collections import deque
+import time
+import threading
 
 # Global API Key will be set after API window input
 api_key = None
@@ -22,11 +24,11 @@ def validate_api_key(key):
     return False
 
 def generate_prompt(topic, learning_outcomes, age_group, output_type, time_minutes = None, location_name = None):
-     """Generates a prompt based on the input"""
-     if output_type == "Ideas":
-            prompt = f"""
+    """Generates a prompt based on the input"""
+    if output_type == "Ideas":
+         prompt = f"""
             Develop a comprehensive and creative set of STEAM (Science, Technology, Engineering, Arts, Mathematics) integration possibilities
-            for the topic: "{topic}" tailored exactly for learners aged {age_group}.
+            for the topic: "{topic}" tailored exactly for learners of age {age_group} years. Make sure that the content is aligned with the cognitive abilities of the age group. The time for this activity should be about {time_minutes} minutes. Also provide examples from real world, so that the output is impactful and meaningful.
 
             The specified learning outcomes are:
             {', '.join(learning_outcomes)}.
@@ -36,35 +38,39 @@ def generate_prompt(topic, learning_outcomes, age_group, output_type, time_minut
             interconnectedness of these areas. Be creative but do not stary too far from the topic. Be realistic. Structure your output using clear headings, sub-headings, and bullet points where necessary, to make it easy to read.
             Use markdown style, for example, use **Heading** for headings and *italic* for italics.
             """
-     else:
-         prompt = f"""
-            Create an optimized and relevant lesson plan for the topic: {topic}
-            for learners who are {age_group}. The classroom session is {time_minutes} minutes long.
+    else:
+        prompt = f"""
+           Create an optimized and relevant lesson plan for the topic: {topic}
+            for learners who are {age_group}. The classroom session is {time_minutes} minutes long. Also give a brief context about the location that is being used in the output.
 
             The learning outcomes for this lesson are:
-            {', '.join(learning_outcomes)}
+            {', '.join(learning_outcomes)}.
             
             **Location Context:**
             Location Name: {location_name}
 
-            Given this context, generate a detailed lesson plan which includes STEAM education related integrations.
+            Given this context, generate a detailed lesson plan which follows the 5E model- Engage, Explore, Explain, Elaborate and Evaluate, which includes STEAM education related integrations.
             The lesson plan should include:
 
             *   **Title of the Lesson**
-            *   **Learning Objectives** (restate main outcomes clearly)
-            *   **Materials Needed**
-            *   **Detailed Lesson Procedure** (include activity steps and timings)
-            *   **STEAM Integration** (explain how Science, Technology, Engineering, Arts, and Mathematics are connected in the activities.)
-            *   **Assessment/Review** (check understanding)
+            *   **Learning Objectives** (Clearly restate the core learning outcomes, ensuring they are measurable and aligned with the desired knowledge, skills, and attitudes for students.)
+             *  **Engage** (Design an activity that captures students’ attention at the beginning of the lesson. This activity should activate prior knowledge and spark curiosity about the new topic.Consider using questions, hands-on activities, or a thought-provoking visual or story.)
+            *   **Explore** (Develop an interactive and exploratory activity where students can engage directly with the content in a hands-on or experiential way. This phase should allow students to make observations, test hypotheses, or solve problems in a safe and supportive environment.)
+            *  **Explain** (Present clear explanations to help students make sense of the new concepts or skills they have encountered during exploration. Incorporate student-led discussions, demonstrations, or real-life examples to deepen their understanding.)
+            *   **Elaborate** (Create an extension activity that challenges students to apply their learning in new or real-world contexts. Encourage them to make connections to broader concepts, current events, or personal experiences. This phase should help them think critically and extend their knowledge beyond the lesson.)
+            *  **Evaluate** (Describe an evaluation method to assess whether students have met the learning objectives. This could include formative assessments such as quizzes, presentations, reflections, or peer evaluations. Provide rubrics or criteria for evaluating student understanding.)
+            *   **Materials Needed** (List all materials required for the activities in the lesson plan. Be specific and include any tools, technology, or resources that will support the lesson.)
+            *   **Detailed Lesson Procedure** (Outline the steps for the lesson, providing timing estimates for each phase (Engage, Explore, Explain, Elaborate, Evaluate). Ensure the activities are well-paced and offer opportunities for student reflection and inquiry.)
+            *   **STEAM Integration** (Explicitly describe how Science, Technology, Engineering, Arts, and Mathematics are interconnected within the activities. Highlight how each discipline is applied in creative and meaningful ways, ensuring the integration supports holistic learning and encourages cross-disciplinary thinking.)
             """
-     return prompt
+    return prompt
 
 
 class SteamApp:
     def __init__(self):
         self.window = tk.Tk()
         self.window.title("STEAM Integration Generator")
-        self.window.geometry("1000x700")  # Increased window size
+        self.window.geometry("1000x750")  # Increased window size
         self.window.configure(bg="#f0f0f0")
 
         # History tracking
@@ -78,7 +84,8 @@ class SteamApp:
         self.time_entry = None
         self.location_entry = None
         self.output_type_var = tk.StringVar()
-
+        self.loading_animation = None
+        self.generate_button = None
 
         # Styling using ttk
         self.style = ttk.Style()
@@ -100,7 +107,10 @@ class SteamApp:
 
         try:
             response = model.generate_content(prompt)
-            return response.text
+            if response and response.text:
+                return response.text # Valid response
+            else:
+                return "Error: Could not generate any meaningful output, please try again." # API response is empty or invalid
         except Exception as e:
             return f"Error generating STEAM ideas: {e}"
 
@@ -128,19 +138,19 @@ class SteamApp:
             words = paragraph.split(" ")
             word_count = 0
             for word in words:
-                if word_count < 2 and "**" in word:
-                    self.output_text.insert(tk.END, word.replace("**", ""), "heading")
-                    word_count = word_count + 1
-                elif "**" in word:
-                    self.output_text.insert(tk.END, word.replace("**", ""), "subheading")
-                    word_count = word_count + 1
-                elif "*" in word:
-                    self.output_text.insert(tk.END, word.replace("*", ""), "italic")
-                    word_count = word_count + 1
-                else:
-                    self.output_text.insert(tk.END, word + " ")
-                    word_count = word_count + 1
-            self.output_text.insert(tk.END, "\n")  # Add new line at the end of each paragraph
+              if word_count < 2 and "**" in word:
+                self.output_text.insert(tk.END, word.replace("**",""), "heading")
+                word_count = word_count + 1
+              elif "**" in word:
+                  self.output_text.insert(tk.END, word.replace("**",""), "subheading")
+                  word_count = word_count + 1
+              elif "*" in word:
+                self.output_text.insert(tk.END, word.replace("*",""), "italic")
+                word_count = word_count + 1
+              else:
+                self.output_text.insert(tk.END, word + " ")
+                word_count = word_count + 1
+            self.output_text.insert(tk.END, "\n") #Add new line at the end of each paragraph
         self.output_text.config(state=tk.DISABLED)
 
     def update_history(self, topic, outcomes, age_group, language):
@@ -148,51 +158,60 @@ class SteamApp:
         history_entry = f"Topic: {topic}, Outcomes: {', '.join(outcomes)}, Age: {age_group}, Lang: {language}"
         self.history.append(history_entry)
 
-
     def generate_and_display(self):
-        """Handles GUI interactions for STEAM generation and language selection."""
-        topic = self.topic_entry.get()
-        learning_outcomes = self.outcomes_entry.get().split(",")
-        age_group = self.age_entry.get()
-        language = self.language_var.get()
-        output_type = self.output_type_var.get()
-        time_minutes = None
-        if output_type == "Lesson Plan":
-            time_minutes = self.time_entry.get()
-            if not time_minutes:
-              messagebox.showerror("Error", "Please provide a value for class time.")
-              return
-            try:
-                time_minutes = int(time_minutes)
-            except ValueError:
-                messagebox.showerror("Error", "Time must be a valid integer number.")
-                return
-
-        location_name = None
-        if output_type == "Lesson Plan":
-             location_name = self.location_entry.get()
-
-        if not topic or not learning_outcomes or not age_group:
-          messagebox.showerror("Error", "Please fill in all fields.")
-          return
-        steam_ideas = self.generate_steam_ideas(topic, learning_outcomes, age_group, output_type, time_minutes, location_name)
-
-
-        if steam_ideas.startswith("Error"):
-            messagebox.showerror("Error", steam_ideas)
+       """Handles GUI interactions for STEAM generation and language selection."""
+       topic = self.topic_entry.get()
+       learning_outcomes = self.outcomes_entry.get().split(",")
+       age_group = self.age_entry.get()
+       language = self.language_var.get()
+       output_type = self.output_type_var.get()
+       time_minutes = self.time_entry.get()
+       if not time_minutes:
+            messagebox.showerror("Error", "Please provide a value for class time.")
             return
+       try:
+          time_minutes = int(time_minutes)
+       except ValueError:
+          messagebox.showerror("Error", "Time must be a valid integer number.")
+          return
 
-        if language == "Nepali":
-            translated_ideas = self.translate_text(steam_ideas, "ne")
-            if translated_ideas.startswith("Error"):
-                messagebox.showerror("Error", translated_ideas)
-                return
-            self.format_output_text(translated_ideas)
-            self.update_history(topic, learning_outcomes, age_group, "Nepali")
+       location_name = self.location_entry.get()
 
-        else:
-            self.format_output_text(steam_ideas)
-            self.update_history(topic, learning_outcomes, age_group, "English")
+       if not topic or not learning_outcomes or not age_group:
+         messagebox.showerror("Error", "Please fill in all fields.")
+         return
+
+       # Disable the button while generating output
+       self.generate_button.config(text="Generating, Please Wait...", state=tk.DISABLED)
+
+       def call_api_in_thread():
+            """Call the api in thread so that UI does not freeze"""
+            try:
+                steam_ideas = self.generate_steam_ideas(topic, learning_outcomes, age_group, output_type, time_minutes, location_name)
+                if steam_ideas.startswith("Error"):
+                  messagebox.showerror("Error", steam_ideas)
+                elif language == "Nepali":
+                    translated_ideas = self.translate_text(steam_ideas, 'ne')
+                    if translated_ideas.startswith("Error"):
+                        messagebox.showerror("Error", translated_ideas)
+                    else:
+                        self.format_output_text(translated_ideas)
+                        self.update_history(topic, learning_outcomes, age_group, "Nepali")
+
+                else:
+                    self.format_output_text(steam_ideas)
+                    self.update_history(topic, learning_outcomes, age_group, "English")
+
+            except Exception as e:
+               messagebox.showerror("Error", f"Error during generation, please check inputs and try again. Error: {e}")
+
+            finally:
+               # Re enable button
+               self.generate_button.config(text="Generate STEAM Ideas", state=tk.NORMAL)
+
+       # Use thread to call api
+       thread = threading.Thread(target = call_api_in_thread)
+       thread.start()
 
     def clear_all(self):
         """Clears all input and output fields."""
@@ -304,25 +323,27 @@ class SteamApp:
         submit_button.pack(pady = 10)
         api_window.mainloop()
 
-
     def create_widgets(self):
         """Creates the main application widgets."""
         # Labels and Entries
         ttk.Label(self.window, text="Topic:").grid(row=0, column=0, sticky="w", padx=10, pady=5)
         self.topic_entry = ttk.Entry(self.window, width=80, style="TEntry")  # Increased width
         self.topic_entry.grid(row=0, column=1, padx=10, pady=5)
+        self.topic_entry.bind("<Return>", lambda event: self.outcomes_entry.focus()) # When enter is pressed go to next input
 
         ttk.Label(self.window, text="Learning Outcomes (comma separated):").grid(
             row=1, column=0, sticky="w", padx=10, pady=5
         )
         self.outcomes_entry = ttk.Entry(self.window, width=80, style="TEntry")  # Increased width
         self.outcomes_entry.grid(row=1, column=1, padx=10, pady=5)
+        self.outcomes_entry.bind("<Return>", lambda event: self.age_entry.focus()) # When enter is pressed go to next input
 
         ttk.Label(self.window, text="Age Group:").grid(
             row=2, column=0, sticky="w", padx=10, pady=5
         )
         self.age_entry = ttk.Entry(self.window, width=80, style="TEntry")  # Increased width
         self.age_entry.grid(row=2, column=1, padx=10, pady=5)
+        self.age_entry.bind("<Return>", lambda event: self.output_type_var.focus_set()) #When enter is pressed go to dropdown option
 
        # Output type options
         ttk.Label(self.window, text="Output Type:").grid(row=3, column=0, sticky="w", padx=10, pady=5)
@@ -330,12 +351,15 @@ class SteamApp:
         output_combobox = ttk.Combobox(self.window, textvariable=self.output_type_var, values = output_options, style = "TCombobox")
         output_combobox.set("Ideas") # Set the default as "Ideas"
         output_combobox.grid(row=3, column=1, padx=10, pady=5)
+        output_combobox.bind("<Return>", lambda event: self.time_entry.focus() ) # When enter is pressed go to time entry, for both cases
+
         # Time entry
         ttk.Label(self.window, text="Class Time (minutes):").grid(
             row=4, column=0, sticky="w", padx=10, pady=5
         )
         self.time_entry = ttk.Entry(self.window, width=80, style="TEntry")  # Increased width
         self.time_entry.grid(row=4, column=1, padx=10, pady=5)
+        self.time_entry.bind("<Return>", lambda event: self.location_entry.focus())  # When enter is pressed go to location entry.
 
          # Location Input
         ttk.Label(self.window, text="Location Name:").grid(
@@ -343,9 +367,10 @@ class SteamApp:
         )
         self.location_entry = ttk.Entry(self.window, width=80, style="TEntry")  # Increased width
         self.location_entry.grid(row=5, column=1, padx=10, pady=5)
+        self.location_entry.bind("<Return>", lambda event: self.language_var.focus_set()) # When enter is pressed go to language combobox.
 
 
-        # Language Selection
+         # Language Selection
         ttk.Label(self.window, text="Language:").grid(
             row=6, column=0, sticky="w", padx=10, pady=5
         )
@@ -357,16 +382,18 @@ class SteamApp:
         )
         language_combobox.set("English")
         language_combobox.grid(row=6, column=1, padx=10, pady=5)
+        language_combobox.bind("<Return>", lambda event: self.generate_button.focus_set()) # When enter is pressed go to generate button
+
 
         # Buttons Frame
         button_frame = ttk.Frame(self.window, padding=10)
         button_frame.grid(row=7, column=0, columnspan=2, pady=10)
 
         # Generate Button
-        generate_button = ttk.Button(
+        self.generate_button = ttk.Button(
             button_frame, text="Generate STEAM Ideas", command=self.generate_and_display, style="TButton"
         )
-        generate_button.grid(row=0, column=0, padx=5)
+        self.generate_button.grid(row=0, column=0, padx=5)
 
         # Clear All Button
         clear_button = ttk.Button(
@@ -386,10 +413,11 @@ class SteamApp:
             wrap=tk.WORD,
             width=120,  # Increased width
             height=20,  # Increased height
-            state=tk.DISABLED,
+            state=tk.NORMAL, # Changed to NORMAL to make it editable
             font=("Helvetica", 11),
         )
         self.output_text.grid(row=8, column=0, columnspan=2, padx=10, pady=10)
+
 
         # Menu Bar
         menu_bar = tk.Menu(self.window)
@@ -430,7 +458,6 @@ def api_key_window():
               api_key_entry.config(show="")
         else:
             api_key_entry.config(show="*")
-
 
     checkbox = ttk.Checkbutton(api_window, text = "Show password", variable = show_password_var, command = toggle_password)
     checkbox.pack(pady = 5)
