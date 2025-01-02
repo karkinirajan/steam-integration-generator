@@ -11,6 +11,10 @@ from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Inches, Pt
 from googletrans import Translator
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 # Global API Key will be set after API window input
 api_key = None
@@ -63,7 +67,7 @@ def generate_prompt(
 
             *   **Title of the Lesson**
             *   **Learning Objectives** (Clearly restate the core learning outcomes, ensuring they are measurable and aligned with the desired knowledge, skills, and attitudes for students.)
-             *  **Engage** (Design an activity that captures students’ attention at the beginning of the lesson. This activity should activate prior knowledge and spark curiosity about the new topic.Consider using questions, hands-on activities, or a thought-provoking visual or story.)
+             *  **Engage** (Design an activity that captures students' attention at the beginning of the lesson. This activity should activate prior knowledge and spark curiosity about the new topic.Consider using questions, hands-on activities, or a thought-provoking visual or story.)
             *   **Explore** (Develop an interactive and exploratory activity where students can engage directly with the content in a hands-on or experiential way. This phase should allow students to make observations, test hypotheses, or solve problems in a safe and supportive environment.)
             *  **Explain** (Present clear explanations to help students make sense of the new concepts or skills they have encountered during exploration. Incorporate student-led discussions, demonstrations, or real-life examples to deepen their understanding.)
             *   **Elaborate** (Create an extension activity that challenges students to apply their learning in new or real-world contexts. Encourage them to make connections to broader concepts, current events, or personal experiences. This phase should help them think critically and extend their knowledge beyond the lesson.)
@@ -79,11 +83,12 @@ class SteamApp:
     def __init__(self):
         self.window = tk.Tk()
         self.window.title("STEAM Integration Generator")
-        self.window.geometry("1000x750")  # Increased window size
+        self.window.geometry("1000x750")
         self.window.configure(bg="#f0f0f0")
 
         # History tracking
         self.history = deque(maxlen=5)
+
         # Variables
         self.topic_entry = None
         self.outcomes_entry = None
@@ -93,6 +98,7 @@ class SteamApp:
         self.time_entry = None
         self.location_entry = None
         self.output_type_var = tk.StringVar()
+        self.export_format_var = tk.StringVar(value="DOCX")
         self.loading_animation = None
         self.generate_button = None
 
@@ -103,7 +109,6 @@ class SteamApp:
         self.style.configure("TButton", font=("Helvetica", 11), padding=5)
         self.style.configure("TCombobox", font=("Helvetica", 11))
         self.style.configure("TEntry", font=("Helvetica", 11))
-        self.api_key = None  # Global api key
 
         self.create_widgets()
 
@@ -132,9 +137,11 @@ class SteamApp:
         try:
             response = model.generate_content(prompt)
             if response and response.text:
-                return response.text  # Valid response
+                return response.text
             else:
-                return "Error: Could not generate any meaningful output, please try again."  # API response is empty or invalid
+                return (
+                    "Error: Could not generate any meaningful output, please try again."
+                )
         except Exception as e:
             return f"Error generating STEAM ideas: {e}"
 
@@ -164,22 +171,137 @@ class SteamApp:
             for word in words:
                 if word_count < 2 and "**" in word:
                     self.output_text.insert(tk.END, word.replace("**", ""), "heading")
-                    word_count = word_count + 1
+                    word_count += 1
                 elif "**" in word:
                     self.output_text.insert(
                         tk.END, word.replace("**", ""), "subheading"
                     )
-                    word_count = word_count + 1
+                    word_count += 1
                 elif "*" in word:
                     self.output_text.insert(tk.END, word.replace("*", ""), "italic")
-                    word_count = word_count + 1
+                    word_count += 1
                 else:
                     self.output_text.insert(tk.END, word + " ")
-                    word_count = word_count + 1
-            self.output_text.insert(
-                tk.END, "\n"
-            )  # Add new line at the end of each paragraph
+                    word_count += 1
+            self.output_text.insert(tk.END, "\n")
+
         self.output_text.config(state=tk.DISABLED)
+
+    def export_to_pdf(self):
+        """Exports the generated STEAM ideas to a PDF file with formatting."""
+        steam_text = self.output_text.get(1.0, tk.END).strip()
+        if not steam_text:
+            messagebox.showwarning("Warning", "No STEAM ideas to export.")
+            return
+
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".pdf", filetypes=[("PDF Document", "*.pdf")]
+        )
+
+        if file_path:
+            try:
+                doc = SimpleDocTemplate(file_path, pagesize=letter)
+                styles = getSampleStyleSheet()
+
+                # Modify existing styles instead of adding new ones
+                heading_style = ParagraphStyle(
+                    "CustomHeading",
+                    parent=styles["Heading1"],
+                    fontSize=14,
+                    spaceAfter=12,
+                )
+
+                subheading_style = ParagraphStyle(
+                    "CustomSubheading",
+                    parent=styles["Heading2"],
+                    fontSize=12,
+                    spaceAfter=10,
+                )
+
+                # Modify the existing Normal style
+                normal_style = styles["Normal"]
+                normal_style.fontSize = 11
+                normal_style.spaceAfter = 8
+
+                story = []
+                paragraphs = steam_text.split("\n")
+
+                for paragraph in paragraphs:
+                    if "**" in paragraph:
+                        clean_text = paragraph.replace("**", "")
+                        story.append(Paragraph(clean_text, heading_style))
+                    elif "*" in paragraph:
+                        clean_text = paragraph.replace("*", "<i>").replace("*", "</i>")
+                        story.append(Paragraph(clean_text, normal_style))
+                    else:
+                        if paragraph.strip():
+                            story.append(Paragraph(paragraph, normal_style))
+                            story.append(Spacer(1, 6))
+
+                doc.build(story)
+                messagebox.showinfo(
+                    "Success", "STEAM ideas exported successfully to PDF."
+                )
+            except Exception as e:
+                messagebox.showerror(
+                    "Error", f"Failed to export STEAM ideas to PDF: {e}"
+                )
+
+    def export_to_docx(self):
+        """Exports the generated STEAM ideas to a DOCX file with formatting."""
+        steam_text = self.output_text.get(1.0, tk.END).strip()
+        if not steam_text:
+            messagebox.showwarning("Warning", "No STEAM ideas to export.")
+            return
+
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".docx", filetypes=[("Word Document", "*.docx")]
+        )
+
+        if file_path:
+            try:
+                document = Document()
+                style = document.styles["Normal"]
+                style.font.name = "Helvetica"
+                style.font.size = Pt(11)
+
+                for paragraph in steam_text.split("\n"):
+                    p = document.add_paragraph()
+                    words = paragraph.split(" ")
+                    word_count = 0
+                    for word in words:
+                        if word_count < 2 and "**" in word:
+                            run = p.add_run(word.replace("**", ""))
+                            run.bold = True
+                            run.font.size = Pt(14)
+                            word_count += 1
+                        elif "**" in word:
+                            run = p.add_run(word.replace("**", ""))
+                            run.bold = True
+                            run.font.size = Pt(13)
+                            word_count += 1
+                        elif "*" in word:
+                            run = p.add_run(word.replace("*", ""))
+                            run.italic = True
+                            word_count += 1
+                        else:
+                            run = p.add_run(word + " ")
+                            word_count += 1
+
+                    p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+
+                document.save(file_path)
+                messagebox.showinfo("Success", "STEAM ideas exported successfully.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to export STEAM ideas: {e}")
+
+    def export_document(self):
+        """Handles the export based on selected format"""
+        export_format = self.export_format_var.get()
+        if export_format == "DOCX":
+            self.export_to_docx()
+        elif export_format == "PDF":
+            self.export_to_pdf()
 
     def update_history(self, topic, outcomes, age_group, language):
         """Updates the history with current details."""
@@ -194,9 +316,11 @@ class SteamApp:
         language = self.language_var.get()
         output_type = self.output_type_var.get()
         time_minutes = self.time_entry.get()
+
         if not time_minutes:
             messagebox.showerror("Error", "Please provide a value for class time.")
             return
+
         try:
             time_minutes = int(time_minutes)
         except ValueError:
@@ -209,13 +333,11 @@ class SteamApp:
             messagebox.showerror("Error", "Please fill in all fields.")
             return
 
-        # Disable the button while generating output
         self.generate_button.config(
             text="Generating, Please Wait...", state=tk.DISABLED
         )
 
         def call_api_in_thread():
-            """Call the api in thread so that UI does not freeze"""
             try:
                 steam_ideas = self.generate_steam_ideas(
                     topic,
@@ -236,7 +358,6 @@ class SteamApp:
                         self.update_history(
                             topic, learning_outcomes, age_group, "Nepali"
                         )
-
                 else:
                     self.format_output_text(steam_ideas)
                     self.update_history(topic, learning_outcomes, age_group, "English")
@@ -248,12 +369,10 @@ class SteamApp:
                 )
 
             finally:
-                # Re enable button
                 self.generate_button.config(
                     text="Generate STEAM Ideas", state=tk.NORMAL
                 )
 
-        # Use thread to call api
         thread = threading.Thread(target=call_api_in_thread)
         thread.start()
 
@@ -269,54 +388,6 @@ class SteamApp:
             self.time_entry.delete(0, tk.END)
         if self.location_entry:
             self.location_entry.delete(0, tk.END)
-
-    def export_to_docx(self):
-        """Exports the generated STEAM ideas to a DOCX file with formatting."""
-        steam_text = self.output_text.get(1.0, tk.END).strip()
-        if not steam_text:
-            messagebox.showwarning("Warning", "No STEAM ideas to export.")
-            return
-
-        file_path = filedialog.asksaveasfilename(
-            defaultextension=".docx", filetypes=[("Word Document", "*.docx")]
-        )
-        if file_path:
-            try:
-                document = Document()
-                # Apply Helvetica font to the entire document
-                style = document.styles["Normal"]
-                style.font.name = "Helvetica"
-                style.font.size = Pt(11)  # Set default font size
-
-                for paragraph in steam_text.split("\n"):
-                    p = document.add_paragraph()
-                    words = paragraph.split(" ")
-                    word_count = 0
-                    for word in words:
-                        if word_count < 2 and "**" in word:
-                            run = p.add_run(word.replace("**", ""))
-                            run.bold = True
-                            run.font.size = Pt(14)  # Set bold fonts as headings
-                            word_count = word_count + 1
-                        elif "**" in word:
-                            run = p.add_run(word.replace("**", ""))
-                            run.bold = True
-                            run.font.size = Pt(13)  # Set bold fonts as sub headings
-                            word_count = word_count + 1
-                        elif "*" in word:
-                            run = p.add_run(word.replace("*", ""))
-                            run.italic = True
-                            word_count = word_count + 1
-                        else:
-                            run = p.add_run(word + " ")
-                            word_count = word_count + 1
-
-                    p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-
-                document.save(file_path)
-                messagebox.showinfo("Success", "STEAM ideas exported successfully.")
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to export STEAM ideas: {e}")
 
     def show_about(self):
         """Displays the about message."""
@@ -381,35 +452,23 @@ class SteamApp:
         ttk.Label(self.window, text="Topic:").grid(
             row=0, column=0, sticky="w", padx=10, pady=5
         )
-        self.topic_entry = ttk.Entry(
-            self.window, width=80, style="TEntry"
-        )  # Increased width
+        self.topic_entry = ttk.Entry(self.window, width=80, style="TEntry")
         self.topic_entry.grid(row=0, column=1, padx=10, pady=5)
-        self.topic_entry.bind(
-            "<Return>", lambda event: self.outcomes_entry.focus()
-        )  # When enter is pressed go to next input
+        self.topic_entry.bind("<Return>", lambda event: self.outcomes_entry.focus())
 
         ttk.Label(self.window, text="Learning Outcomes (comma separated):").grid(
             row=1, column=0, sticky="w", padx=10, pady=5
         )
-        self.outcomes_entry = ttk.Entry(
-            self.window, width=80, style="TEntry"
-        )  # Increased width
+        self.outcomes_entry = ttk.Entry(self.window, width=80, style="TEntry")
         self.outcomes_entry.grid(row=1, column=1, padx=10, pady=5)
-        self.outcomes_entry.bind(
-            "<Return>", lambda event: self.age_entry.focus()
-        )  # When enter is pressed go to next input
+        self.outcomes_entry.bind("<Return>", lambda event: self.age_entry.focus())
 
         ttk.Label(self.window, text="Age Group:").grid(
             row=2, column=0, sticky="w", padx=10, pady=5
         )
-        self.age_entry = ttk.Entry(
-            self.window, width=80, style="TEntry"
-        )  # Increased width
+        self.age_entry = ttk.Entry(self.window, width=80, style="TEntry")
         self.age_entry.grid(row=2, column=1, padx=10, pady=5)
-        self.age_entry.bind(
-            "<Return>", lambda event: self.output_type_var.focus_set()
-        )  # When enter is pressed go to dropdown option
+        self.age_entry.bind("<Return>", lambda event: self.output_type_var.focus_set())
 
         # Output type options
         ttk.Label(self.window, text="Output Type:").grid(
@@ -422,35 +481,27 @@ class SteamApp:
             values=output_options,
             style="TCombobox",
         )
-        output_combobox.set("Ideas")  # Set the default as "Ideas"
+        output_combobox.set("Ideas")
         output_combobox.grid(row=3, column=1, padx=10, pady=5)
-        output_combobox.bind(
-            "<Return>", lambda event: self.time_entry.focus()
-        )  # When enter is pressed go to time entry, for both cases
+        output_combobox.bind("<Return>", lambda event: self.time_entry.focus())
 
         # Time entry
         ttk.Label(self.window, text="Class Time (minutes):").grid(
             row=4, column=0, sticky="w", padx=10, pady=5
         )
-        self.time_entry = ttk.Entry(
-            self.window, width=80, style="TEntry"
-        )  # Increased width
+        self.time_entry = ttk.Entry(self.window, width=80, style="TEntry")
         self.time_entry.grid(row=4, column=1, padx=10, pady=5)
-        self.time_entry.bind(
-            "<Return>", lambda event: self.location_entry.focus()
-        )  # When enter is pressed go to location entry.
+        self.time_entry.bind("<Return>", lambda event: self.location_entry.focus())
 
         # Location Input
         ttk.Label(self.window, text="Location Name:").grid(
             row=5, column=0, sticky="w", padx=10, pady=5
         )
-        self.location_entry = ttk.Entry(
-            self.window, width=80, style="TEntry"
-        )  # Increased width
+        self.location_entry = ttk.Entry(self.window, width=80, style="TEntry")
         self.location_entry.grid(row=5, column=1, padx=10, pady=5)
         self.location_entry.bind(
             "<Return>", lambda event: self.language_var.focus_set()
-        )  # When enter is pressed go to language combobox.
+        )
 
         # Language Selection
         ttk.Label(self.window, text="Language:").grid(
@@ -466,7 +517,7 @@ class SteamApp:
         language_combobox.grid(row=6, column=1, padx=10, pady=5)
         language_combobox.bind(
             "<Return>", lambda event: self.generate_button.focus_set()
-        )  # When enter is pressed go to generate button
+        )
 
         # Buttons Frame
         button_frame = ttk.Frame(self.window, padding=10)
@@ -483,26 +534,40 @@ class SteamApp:
 
         # Clear All Button
         clear_button = ttk.Button(
-            button_frame, text="Clear All", command=self.clear_all, style="TButton"
+            button_frame,
+            text="Clear All",
+            command=self.clear_all,
+            style="TButton",
         )
         clear_button.grid(row=0, column=1, padx=5)
+
+        # Export format selection
+        ttk.Label(button_frame, text="Export Format:").grid(row=0, column=2, padx=5)
+        export_format_combo = ttk.Combobox(
+            button_frame,
+            textvariable=self.export_format_var,
+            values=["DOCX", "PDF"],
+            state="readonly",
+            width=10,
+        )
+        export_format_combo.grid(row=0, column=3, padx=5)
 
         # Export Button
         export_button = ttk.Button(
             button_frame,
-            text="Export to Docs",
-            command=self.export_to_docx,
+            text="Export Document",
+            command=self.export_document,
             style="TButton",
         )
-        export_button.grid(row=0, column=2, padx=5)
+        export_button.grid(row=0, column=4, padx=5)
 
         # Output Text Box
         self.output_text = scrolledtext.ScrolledText(
             self.window,
             wrap=tk.WORD,
-            width=120,  # Increased width
-            height=20,  # Increased height
-            state=tk.NORMAL,  # Changed to NORMAL to make it editable
+            width=120,
+            height=20,
+            state=tk.NORMAL,
             font=("Helvetica", 11),
         )
         self.output_text.grid(row=8, column=0, columnspan=2, padx=10, pady=10)
@@ -524,6 +589,7 @@ class SteamApp:
         menu_bar.add_cascade(label="About", menu=about_menu)
 
     def run(self):
+        """Starts the application main loop."""
         self.window.mainloop()
 
 
@@ -531,11 +597,10 @@ def api_key_window():
     """Creates a window for API key input."""
     api_window = tk.Tk()
     api_window.title("Enter API Key")
-    api_window.geometry("400x150")  # Set api window size
+    api_window.geometry("400x150")
 
     ttk.Label(api_window, text="Enter Your Gemini API Key:").pack(pady=10)
-
-    api_key_entry = ttk.Entry(api_window, width=50, show="*")  # set to * initially
+    api_key_entry = ttk.Entry(api_window, width=50, show="*")
     api_key_entry.pack(pady=10)
 
     show_password_var = tk.BooleanVar(value=False)
@@ -561,8 +626,8 @@ def api_key_window():
         key = api_key_entry.get()
         if validate_api_key(key):
             api_key = key
-            api_window.destroy()  # Close the API window
-            app = SteamApp()  # Start the main application
+            api_window.destroy()
+            app = SteamApp()
             app.run()
         else:
             messagebox.showerror("Error", "Invalid API Key, Please enter a valid key")
@@ -573,5 +638,4 @@ def api_key_window():
 
 
 if __name__ == "__main__":
-    api_key_window()
     api_key_window()
