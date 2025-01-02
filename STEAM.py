@@ -1,15 +1,16 @@
-import google.generativeai as genai
-import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox, filedialog
 import os
-from googletrans import Translator
-from docx import Document
-from docx.shared import Inches, Pt
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.style import WD_STYLE_TYPE
-from collections import deque
-import time
 import threading
+import time
+import tkinter as tk
+from collections import deque
+from tkinter import filedialog, messagebox, scrolledtext, ttk
+
+import google.generativeai as genai
+from docx import Document
+from docx.enum.style import WD_STYLE_TYPE
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Inches, Pt
+from googletrans import Translator
 
 # Global API Key will be set after API window input
 api_key = None
@@ -23,10 +24,18 @@ def validate_api_key(key):
         return True
     return False
 
-def generate_prompt(topic, learning_outcomes, age_group, output_type, time_minutes = None, location_name = None):
+
+def generate_prompt(
+    topic,
+    learning_outcomes,
+    age_group,
+    output_type,
+    time_minutes=None,
+    location_name=None,
+):
     """Generates a prompt based on the input"""
     if output_type == "Ideas":
-         prompt = f"""
+        prompt = f"""
             Develop a comprehensive and creative set of STEAM (Science, Technology, Engineering, Arts, Mathematics) integration possibilities
             for the topic: "{topic}" tailored exactly for learners of age {age_group} years. Make sure that the content is aligned with the cognitive abilities of the age group. The time for this activity should be about {time_minutes} minutes. Also provide examples from real world, so that the output is impactful and meaningful.
 
@@ -75,7 +84,7 @@ class SteamApp:
 
         # History tracking
         self.history = deque(maxlen=5)
-         # Variables
+        # Variables
         self.topic_entry = None
         self.outcomes_entry = None
         self.age_entry = None
@@ -94,23 +103,38 @@ class SteamApp:
         self.style.configure("TButton", font=("Helvetica", 11), padding=5)
         self.style.configure("TCombobox", font=("Helvetica", 11))
         self.style.configure("TEntry", font=("Helvetica", 11))
-        self.api_key = None # Global api key
+        self.api_key = None  # Global api key
 
         self.create_widgets()
 
-    def generate_steam_ideas(self, topic, learning_outcomes, age_group, output_type, time_minutes = None, location_name = None):
+    def generate_steam_ideas(
+        self,
+        topic,
+        learning_outcomes,
+        age_group,
+        output_type,
+        time_minutes=None,
+        location_name=None,
+    ):
         """Generates elaborate STEAM integration ideas for a topic."""
         global api_key
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-pro")
-        prompt = generate_prompt(topic, learning_outcomes, age_group, output_type, time_minutes, location_name)
+        prompt = generate_prompt(
+            topic,
+            learning_outcomes,
+            age_group,
+            output_type,
+            time_minutes,
+            location_name,
+        )
 
         try:
             response = model.generate_content(prompt)
             if response and response.text:
-                return response.text # Valid response
+                return response.text  # Valid response
             else:
-                return "Error: Could not generate any meaningful output, please try again." # API response is empty or invalid
+                return "Error: Could not generate any meaningful output, please try again."  # API response is empty or invalid
         except Exception as e:
             return f"Error generating STEAM ideas: {e}"
 
@@ -138,19 +162,23 @@ class SteamApp:
             words = paragraph.split(" ")
             word_count = 0
             for word in words:
-              if word_count < 2 and "**" in word:
-                self.output_text.insert(tk.END, word.replace("**",""), "heading")
-                word_count = word_count + 1
-              elif "**" in word:
-                  self.output_text.insert(tk.END, word.replace("**",""), "subheading")
-                  word_count = word_count + 1
-              elif "*" in word:
-                self.output_text.insert(tk.END, word.replace("*",""), "italic")
-                word_count = word_count + 1
-              else:
-                self.output_text.insert(tk.END, word + " ")
-                word_count = word_count + 1
-            self.output_text.insert(tk.END, "\n") #Add new line at the end of each paragraph
+                if word_count < 2 and "**" in word:
+                    self.output_text.insert(tk.END, word.replace("**", ""), "heading")
+                    word_count = word_count + 1
+                elif "**" in word:
+                    self.output_text.insert(
+                        tk.END, word.replace("**", ""), "subheading"
+                    )
+                    word_count = word_count + 1
+                elif "*" in word:
+                    self.output_text.insert(tk.END, word.replace("*", ""), "italic")
+                    word_count = word_count + 1
+                else:
+                    self.output_text.insert(tk.END, word + " ")
+                    word_count = word_count + 1
+            self.output_text.insert(
+                tk.END, "\n"
+            )  # Add new line at the end of each paragraph
         self.output_text.config(state=tk.DISABLED)
 
     def update_history(self, topic, outcomes, age_group, language):
@@ -159,59 +187,75 @@ class SteamApp:
         self.history.append(history_entry)
 
     def generate_and_display(self):
-       """Handles GUI interactions for STEAM generation and language selection."""
-       topic = self.topic_entry.get()
-       learning_outcomes = self.outcomes_entry.get().split(",")
-       age_group = self.age_entry.get()
-       language = self.language_var.get()
-       output_type = self.output_type_var.get()
-       time_minutes = self.time_entry.get()
-       if not time_minutes:
+        """Handles GUI interactions for STEAM generation and language selection."""
+        topic = self.topic_entry.get()
+        learning_outcomes = self.outcomes_entry.get().split(",")
+        age_group = self.age_entry.get()
+        language = self.language_var.get()
+        output_type = self.output_type_var.get()
+        time_minutes = self.time_entry.get()
+        if not time_minutes:
             messagebox.showerror("Error", "Please provide a value for class time.")
             return
-       try:
-          time_minutes = int(time_minutes)
-       except ValueError:
-          messagebox.showerror("Error", "Time must be a valid integer number.")
-          return
+        try:
+            time_minutes = int(time_minutes)
+        except ValueError:
+            messagebox.showerror("Error", "Time must be a valid integer number.")
+            return
 
-       location_name = self.location_entry.get()
+        location_name = self.location_entry.get()
 
-       if not topic or not learning_outcomes or not age_group:
-         messagebox.showerror("Error", "Please fill in all fields.")
-         return
+        if not topic or not learning_outcomes or not age_group:
+            messagebox.showerror("Error", "Please fill in all fields.")
+            return
 
-       # Disable the button while generating output
-       self.generate_button.config(text="Generating, Please Wait...", state=tk.DISABLED)
+        # Disable the button while generating output
+        self.generate_button.config(
+            text="Generating, Please Wait...", state=tk.DISABLED
+        )
 
-       def call_api_in_thread():
+        def call_api_in_thread():
             """Call the api in thread so that UI does not freeze"""
             try:
-                steam_ideas = self.generate_steam_ideas(topic, learning_outcomes, age_group, output_type, time_minutes, location_name)
+                steam_ideas = self.generate_steam_ideas(
+                    topic,
+                    learning_outcomes,
+                    age_group,
+                    output_type,
+                    time_minutes,
+                    location_name,
+                )
                 if steam_ideas.startswith("Error"):
-                  messagebox.showerror("Error", steam_ideas)
+                    messagebox.showerror("Error", steam_ideas)
                 elif language == "Nepali":
-                    translated_ideas = self.translate_text(steam_ideas, 'ne')
+                    translated_ideas = self.translate_text(steam_ideas, "ne")
                     if translated_ideas.startswith("Error"):
                         messagebox.showerror("Error", translated_ideas)
                     else:
                         self.format_output_text(translated_ideas)
-                        self.update_history(topic, learning_outcomes, age_group, "Nepali")
+                        self.update_history(
+                            topic, learning_outcomes, age_group, "Nepali"
+                        )
 
                 else:
                     self.format_output_text(steam_ideas)
                     self.update_history(topic, learning_outcomes, age_group, "English")
 
             except Exception as e:
-               messagebox.showerror("Error", f"Error during generation, please check inputs and try again. Error: {e}")
+                messagebox.showerror(
+                    "Error",
+                    f"Error during generation, please check inputs and try again. Error: {e}",
+                )
 
             finally:
-               # Re enable button
-               self.generate_button.config(text="Generate STEAM Ideas", state=tk.NORMAL)
+                # Re enable button
+                self.generate_button.config(
+                    text="Generate STEAM Ideas", state=tk.NORMAL
+                )
 
-       # Use thread to call api
-       thread = threading.Thread(target = call_api_in_thread)
-       thread.start()
+        # Use thread to call api
+        thread = threading.Thread(target=call_api_in_thread)
+        thread.start()
 
     def clear_all(self):
         """Clears all input and output fields."""
@@ -222,10 +266,9 @@ class SteamApp:
         self.output_text.delete(1.0, tk.END)
         self.output_text.config(state=tk.DISABLED)
         if self.time_entry:
-          self.time_entry.delete(0,tk.END)
+            self.time_entry.delete(0, tk.END)
         if self.location_entry:
-          self.location_entry.delete(0, tk.END)
-
+            self.location_entry.delete(0, tk.END)
 
     def export_to_docx(self):
         """Exports the generated STEAM ideas to a DOCX file with formatting."""
@@ -278,7 +321,8 @@ class SteamApp:
     def show_about(self):
         """Displays the about message."""
         messagebox.showinfo(
-            "About", "STEAM Integration Generator\nCreated by Rajat using Gemini AI.\nhttps://github.com/rajat-ed/steam-integration-generator"
+            "About",
+            "STEAM Integration Generator\nCreated by Rajat using Gemini AI.\nhttps://github.com/rajat-ed/steam-integration-generator",
         )
 
     def show_history(self):
@@ -296,81 +340,119 @@ class SteamApp:
 
         ttk.Label(api_window, text="Enter Your New Gemini API Key:").pack(pady=10)
         api_key_entry = ttk.Entry(api_window, width=50)
-        api_key_entry.pack(pady = 10)
-        show_password_var = tk.BooleanVar(value = False)
+        api_key_entry.pack(pady=10)
+        show_password_var = tk.BooleanVar(value=False)
+
         def toggle_password():
             global show_password
             show_password = not show_password
             if show_password:
-                  api_key_entry.config(show="")
+                api_key_entry.config(show="")
             else:
                 api_key_entry.config(show="*")
 
-        checkbox = ttk.Checkbutton(api_window, text = "Show password", variable = show_password_var, command = toggle_password)
-        checkbox.pack(pady = 5)
+        checkbox = ttk.Checkbutton(
+            api_window,
+            text="Show password",
+            variable=show_password_var,
+            command=toggle_password,
+        )
+        checkbox.pack(pady=5)
 
         def submit_new_key():
             global api_key
             key = api_key_entry.get()
             if validate_api_key(key):
-              api_key = key
-              messagebox.showinfo("API Key Changed", "API key changed successfully.")
-              api_window.destroy()
+                api_key = key
+                messagebox.showinfo("API Key Changed", "API key changed successfully.")
+                api_window.destroy()
             else:
-              messagebox.showerror("Error", "Invalid API Key, Please enter a valid key")
+                messagebox.showerror(
+                    "Error", "Invalid API Key, Please enter a valid key"
+                )
 
         submit_button = ttk.Button(api_window, text="Submit", command=submit_new_key)
-        submit_button.pack(pady = 10)
+        submit_button.pack(pady=10)
         api_window.mainloop()
 
     def create_widgets(self):
         """Creates the main application widgets."""
         # Labels and Entries
-        ttk.Label(self.window, text="Topic:").grid(row=0, column=0, sticky="w", padx=10, pady=5)
-        self.topic_entry = ttk.Entry(self.window, width=80, style="TEntry")  # Increased width
+        ttk.Label(self.window, text="Topic:").grid(
+            row=0, column=0, sticky="w", padx=10, pady=5
+        )
+        self.topic_entry = ttk.Entry(
+            self.window, width=80, style="TEntry"
+        )  # Increased width
         self.topic_entry.grid(row=0, column=1, padx=10, pady=5)
-        self.topic_entry.bind("<Return>", lambda event: self.outcomes_entry.focus()) # When enter is pressed go to next input
+        self.topic_entry.bind(
+            "<Return>", lambda event: self.outcomes_entry.focus()
+        )  # When enter is pressed go to next input
 
         ttk.Label(self.window, text="Learning Outcomes (comma separated):").grid(
             row=1, column=0, sticky="w", padx=10, pady=5
         )
-        self.outcomes_entry = ttk.Entry(self.window, width=80, style="TEntry")  # Increased width
+        self.outcomes_entry = ttk.Entry(
+            self.window, width=80, style="TEntry"
+        )  # Increased width
         self.outcomes_entry.grid(row=1, column=1, padx=10, pady=5)
-        self.outcomes_entry.bind("<Return>", lambda event: self.age_entry.focus()) # When enter is pressed go to next input
+        self.outcomes_entry.bind(
+            "<Return>", lambda event: self.age_entry.focus()
+        )  # When enter is pressed go to next input
 
         ttk.Label(self.window, text="Age Group:").grid(
             row=2, column=0, sticky="w", padx=10, pady=5
         )
-        self.age_entry = ttk.Entry(self.window, width=80, style="TEntry")  # Increased width
+        self.age_entry = ttk.Entry(
+            self.window, width=80, style="TEntry"
+        )  # Increased width
         self.age_entry.grid(row=2, column=1, padx=10, pady=5)
-        self.age_entry.bind("<Return>", lambda event: self.output_type_var.focus_set()) #When enter is pressed go to dropdown option
+        self.age_entry.bind(
+            "<Return>", lambda event: self.output_type_var.focus_set()
+        )  # When enter is pressed go to dropdown option
 
-       # Output type options
-        ttk.Label(self.window, text="Output Type:").grid(row=3, column=0, sticky="w", padx=10, pady=5)
+        # Output type options
+        ttk.Label(self.window, text="Output Type:").grid(
+            row=3, column=0, sticky="w", padx=10, pady=5
+        )
         output_options = ["Ideas", "Lesson Plan"]
-        output_combobox = ttk.Combobox(self.window, textvariable=self.output_type_var, values = output_options, style = "TCombobox")
-        output_combobox.set("Ideas") # Set the default as "Ideas"
+        output_combobox = ttk.Combobox(
+            self.window,
+            textvariable=self.output_type_var,
+            values=output_options,
+            style="TCombobox",
+        )
+        output_combobox.set("Ideas")  # Set the default as "Ideas"
         output_combobox.grid(row=3, column=1, padx=10, pady=5)
-        output_combobox.bind("<Return>", lambda event: self.time_entry.focus() ) # When enter is pressed go to time entry, for both cases
+        output_combobox.bind(
+            "<Return>", lambda event: self.time_entry.focus()
+        )  # When enter is pressed go to time entry, for both cases
 
         # Time entry
         ttk.Label(self.window, text="Class Time (minutes):").grid(
             row=4, column=0, sticky="w", padx=10, pady=5
         )
-        self.time_entry = ttk.Entry(self.window, width=80, style="TEntry")  # Increased width
+        self.time_entry = ttk.Entry(
+            self.window, width=80, style="TEntry"
+        )  # Increased width
         self.time_entry.grid(row=4, column=1, padx=10, pady=5)
-        self.time_entry.bind("<Return>", lambda event: self.location_entry.focus())  # When enter is pressed go to location entry.
+        self.time_entry.bind(
+            "<Return>", lambda event: self.location_entry.focus()
+        )  # When enter is pressed go to location entry.
 
-         # Location Input
+        # Location Input
         ttk.Label(self.window, text="Location Name:").grid(
             row=5, column=0, sticky="w", padx=10, pady=5
         )
-        self.location_entry = ttk.Entry(self.window, width=80, style="TEntry")  # Increased width
+        self.location_entry = ttk.Entry(
+            self.window, width=80, style="TEntry"
+        )  # Increased width
         self.location_entry.grid(row=5, column=1, padx=10, pady=5)
-        self.location_entry.bind("<Return>", lambda event: self.language_var.focus_set()) # When enter is pressed go to language combobox.
+        self.location_entry.bind(
+            "<Return>", lambda event: self.language_var.focus_set()
+        )  # When enter is pressed go to language combobox.
 
-
-         # Language Selection
+        # Language Selection
         ttk.Label(self.window, text="Language:").grid(
             row=6, column=0, sticky="w", padx=10, pady=5
         )
@@ -382,8 +464,9 @@ class SteamApp:
         )
         language_combobox.set("English")
         language_combobox.grid(row=6, column=1, padx=10, pady=5)
-        language_combobox.bind("<Return>", lambda event: self.generate_button.focus_set()) # When enter is pressed go to generate button
-
+        language_combobox.bind(
+            "<Return>", lambda event: self.generate_button.focus_set()
+        )  # When enter is pressed go to generate button
 
         # Buttons Frame
         button_frame = ttk.Frame(self.window, padding=10)
@@ -391,7 +474,10 @@ class SteamApp:
 
         # Generate Button
         self.generate_button = ttk.Button(
-            button_frame, text="Generate STEAM Ideas", command=self.generate_and_display, style="TButton"
+            button_frame,
+            text="Generate STEAM Ideas",
+            command=self.generate_and_display,
+            style="TButton",
         )
         self.generate_button.grid(row=0, column=0, padx=5)
 
@@ -403,7 +489,10 @@ class SteamApp:
 
         # Export Button
         export_button = ttk.Button(
-            button_frame, text="Export to Docs", command=self.export_to_docx, style="TButton"
+            button_frame,
+            text="Export to Docs",
+            command=self.export_to_docx,
+            style="TButton",
         )
         export_button.grid(row=0, column=2, padx=5)
 
@@ -413,23 +502,22 @@ class SteamApp:
             wrap=tk.WORD,
             width=120,  # Increased width
             height=20,  # Increased height
-            state=tk.NORMAL, # Changed to NORMAL to make it editable
+            state=tk.NORMAL,  # Changed to NORMAL to make it editable
             font=("Helvetica", 11),
         )
         self.output_text.grid(row=8, column=0, columnspan=2, padx=10, pady=10)
-
 
         # Menu Bar
         menu_bar = tk.Menu(self.window)
         self.window.config(menu=menu_bar)
 
-        api_menu = tk.Menu(menu_bar, tearoff = 0)
-        api_menu.add_command(label = "Change API Key", command = self.change_api_key)
-        menu_bar.add_cascade(label = "API", menu = api_menu)
+        api_menu = tk.Menu(menu_bar, tearoff=0)
+        api_menu.add_command(label="Change API Key", command=self.change_api_key)
+        menu_bar.add_cascade(label="API", menu=api_menu)
 
-        history_menu = tk.Menu(menu_bar, tearoff = 0)
+        history_menu = tk.Menu(menu_bar, tearoff=0)
         history_menu.add_command(label="History", command=self.show_history)
-        menu_bar.add_cascade(label="History", menu = history_menu)
+        menu_bar.add_cascade(label="History", menu=history_menu)
 
         about_menu = tk.Menu(menu_bar, tearoff=0)
         about_menu.add_command(label="About", command=self.show_about)
@@ -447,21 +535,26 @@ def api_key_window():
 
     ttk.Label(api_window, text="Enter Your Gemini API Key:").pack(pady=10)
 
-    api_key_entry = ttk.Entry(api_window, width=50, show="*") # set to * initially
+    api_key_entry = ttk.Entry(api_window, width=50, show="*")  # set to * initially
     api_key_entry.pack(pady=10)
 
-    show_password_var = tk.BooleanVar(value = False)
+    show_password_var = tk.BooleanVar(value=False)
+
     def toggle_password():
         global show_password
         show_password = not show_password
         if show_password:
-              api_key_entry.config(show="")
+            api_key_entry.config(show="")
         else:
             api_key_entry.config(show="*")
 
-    checkbox = ttk.Checkbutton(api_window, text = "Show password", variable = show_password_var, command = toggle_password)
-    checkbox.pack(pady = 5)
-
+    checkbox = ttk.Checkbutton(
+        api_window,
+        text="Show password",
+        variable=show_password_var,
+        command=toggle_password,
+    )
+    checkbox.pack(pady=5)
 
     def submit_key():
         global api_key
@@ -478,5 +571,7 @@ def api_key_window():
     submit_button.pack(pady=10)
     api_window.mainloop()
 
+
 if __name__ == "__main__":
-  api_key_window()
+    api_key_window()
+    api_key_window()
