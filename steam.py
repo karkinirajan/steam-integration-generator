@@ -597,7 +597,7 @@ def api_key_window():
     """Creates a window for API key input."""
     api_window = tk.Tk()
     api_window.title("Enter API Key")
-    api_window.geometry("400x150")
+    api_window.geometry("800x450")
 
     ttk.Label(api_window, text="Enter Your Gemini API Key:").pack(pady=10)
     api_key_entry = ttk.Entry(api_window, width=50, show="*")
