@@ -1,0 +1,124 @@
+        /* Apple-inspired Dark/Light Mode Theme - Modern Apple UI Buttons */
+        /* --- Base Styles (Light Mode - Apple Inspired Buttons) --- */
+        body { font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; margin: 0; padding: 0; background: #fafafa; color: #222; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; overflow-x: hidden; transition: background-color 0.3s, color 0.3s; }
+        .container { width: 95%; max-width: 1200px; padding: 25px; background: #ffffff; border-radius: 12px; box-shadow: 0 6px 15px rgba(0,0,0,0.1); margin: 20px; display: flex; flex-direction: column; transition: background-color 0.3s, box-shadow 0.3s; }
+        h1 { color: #3478f6; text-align: center; margin-bottom: 20px; font-weight: 600; letter-spacing: -0.5px; }
+
+        /* Navigation Dashboard Styles (Light Mode - Buttons Refined) */
+        .nav-dashboard { display: flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 18px 30px; background: #f0f0f0; border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-bottom: 1px solid #ddd; margin-bottom: 25px; transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s; }
+        .nav-section.api-key-input-group, .nav-section.nav-buttons { margin-bottom: 0; } /* Reset margin for nav sections */
+        .nav-buttons button, .controls button { /* Combined styles for all buttons */
+            padding: 9px 18px; border: 1px solid transparent; border-radius: 7px; font-size: 15px; font-weight: 500; cursor: pointer; transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            background-color: #f0f0f0; color: #444; /* Light Grey Buttons - Apple Style */ box-shadow: 0 1px 1px rgba(0,0,0,0.08); /* Very subtle shadow */
+        }
+        .nav-buttons button:hover, .controls button:hover {
+            background-color: #e0e0e0; /* Slightly Darker on Hover */ box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-color: transparent;
+        }
+        .nav-buttons button:active, .controls button:active { background-color: #d0d0d0; box-shadow: 0 0 0 rgba(0,0,0,0); transform: translateY(1px); } /* Subtle active effect */
+        .nav-buttons button#toggle-mode-button, .controls button#generate-button { /* Special styling for key buttons if needed */ background-color: #3478f6; color: white; box-shadow: 0 1px 1px rgba(0,0,0,0.15); } /* Apple Blue for key buttons */
+        .nav-buttons button#toggle-mode-button:hover, .controls button#generate-button:hover { background-color: #1d63da; box-shadow: 0 1px 3px rgba(0,0,0,0.2); } /* Darker Blue on Hover */
+
+
+        .api-key-input-group label { margin-right: 10px; font-weight: 500; color: #555; }
+        .api-key-input-group input[type="password"] { padding: 9px 15px; border-radius: 7px; border: 1px solid #bbb; font-size: 15px; vertical-align: middle; margin-right: 15px; transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .api-key-input-group input[type="password"]:focus { border-color: #3478f6; box-shadow: 0 0 0 2px rgba(52, 120, 246, 0.3); outline: none; }
+        .api-key-tip { color: #666; font-size: 13px; vertical-align: middle; }
+        .api-key-tip a { color: #3478f6; text-decoration: none; }
+        .api-key-tip a:hover { text-decoration: underline; }
+
+        /* Dashboard Area Styles (Light Mode - No Changes) */
+        .dashboard-area { display: grid; grid-template-columns: 1fr 3fr; gap: 30px; }
+        @media (max-width: 768px) { .dashboard-area { grid-template-columns: 1fr; } }
+        .input-panel, .output-panel { padding: 30px; border-radius: 12px; background: #ffffff; box-shadow: 0 3px 8px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        .dashboard-container { background: none; box-shadow: none; border: none; padding: 0; margin-bottom: 0; }
+        .dashboard-header, .output-header { color: #444; }
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; margin-bottom: 7px; font-weight: 500; color: #555; }
+        .input-group input[type="text"], .input-group select, .input-group textarea { width: 100%; padding: 10px 15px; border: 1px solid #cccccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; color: #333; background: #ffffff; transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; margin-bottom: 4px; }
+        .input-group input[type="text"]:focus, .input-group select:focus, .input-group textarea:focus { border-color: #3478f6; box-shadow: 0 0 0 1.5px rgba(52, 120, 246, 0.4); outline: none; }
+        .input-group select { background-color: #ffffff; color: #333; padding-left: 14px; appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); background-repeat: no-repeat; background-position-x: 100%; background-position-y: 5px; padding-right: 30px; }
+        .input-group select::-ms-expand { display: none; } /* IE and Edge fix */
+        .input-group textarea { font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; min-height: 100px; }
+        #output-text { background: #f0f0f0; color: #444; border: 1px solid #ddd; border-radius: 8px; padding: 15px; overflow-wrap: break-word; white-space: pre-wrap; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); font-size: 15px; }
+
+        /* --- Dark Mode Styles (Apple Inspired Dark Grey - Refined Buttons) --- */
+        body.dark-mode { background: #1e1e1e; color: #f0f0f0; }
+        body.dark-mode .container { background: #2c2c2c; box-shadow: 0 12px 28px rgba(0,0,0,0.4); }
+        body.dark-mode h1 { color: #80cbc4; }
+        body.dark-mode .nav-dashboard { background: #3a3a3a; border-color: #555; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        body.dark-mode .nav-buttons button, body.dark-mode .controls button { /* Combined Dark Mode Button Styles */ background: #555555; color: #ffffff; box-shadow: 0 2px 3px rgba(0,0,0,0.4); border: 1px solid transparent; }
+        body.dark-mode .nav-buttons button:hover, body.dark-mode .controls button:hover { background: #666666; color: #eeeeee; box-shadow: 0 3px 6px rgba(0,0,0,0.5); }
+        body.dark-mode .api-key-input-group label { color: #ddd; }
+        body.dark-mode .api-key-input-group input[type="password"] { background: #444444; color: #ffffff; border-color: #777; }
+        body.dark-mode .api-key-input-group input[type="password"]:focus { background: #555555; border-color: #80cbc4; box-shadow: 0 0 0 2px rgba(128, 203, 196, 0.3); }
+        body.dark-mode .api-key-tip { color: #ccc; }
+        body.dark-mode .api-key-tip a { color: #80cbc4; }
+        body.dark-mode .dashboard-area .input-panel, body.dark-mode  .dashboard-area .output-panel { background: #333333; border-color: #555555; box-shadow: 0 6px 15px rgba(0,0,0,0.5); }
+        body.dark-mode .dashboard-header, body.dark-mode .output-header { color: #eeeeee; }
+        body.dark-mode .input-group label { color: #eeeeee; }
+        body.dark-mode .input-group input[type="text"], body.dark-mode  .input-group select, body.dark-mode  .input-group textarea { background: #444444; color: #ffffff; border-color: #777; border-radius: 6px; }
+        body.dark-mode .input-group input[type="text"]:focus, body.dark-mode  .input-group select:focus, body.dark-mode  .input-group textarea:focus { background: #888888; border-color: #80cbc4; box-shadow: 0 0 0 2px rgba(185, 246, 202, 0.3); }
+        body.dark-mode .input-group select { background-color: #444444; color: #ffffff; border-color: #777; background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); }
+        body.dark-mode #output-text { background: #3a3a3a; color: #f0f0f0; border-color: #999999; box-shadow: inset 0 3px 6px rgba(0,0,0,0.5); }
+        body.dark-mode .controls button#generate-button { background: #80cbc4; color: #222; box-shadow: 0 3px 7px rgba(0,0,0,0.4); color: #333; } /* Teal Generate button in dark mode */
+        body.dark-mode .controls button#generate-button:hover { background: #a7ffeb; color: #333; }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1024px) { /* Adjust for tablets */
+            .dashboard-area {
+                grid-template-columns: 1fr; /* Stack input and output on smaller tablets */
+            }
+            .input-panel, .output-panel {
+                padding: 20px; /* Reduce padding on smaller screens */
+            }
+            .nav-dashboard {
+                flex-direction: column; /* Stack nav items on smaller screens */
+                align-items: stretch; /* Full width nav items */
+                padding: 15px;
+            }
+            .nav-section.api-key-input-group, .nav-section.nav-buttons {
+                margin-bottom: 10px; /* Add space between stacked nav sections */
+                width: 100%; /* Make nav sections full width */
+            }
+             .nav-buttons {
+                display: flex; /* Ensure buttons are in a row in nav buttons section */
+                justify-content: space-around; /* Space buttons out */
+                width: 100%;
+            }
+            .nav-buttons button {
+                width: auto; /* Allow buttons to size based on content */
+                flex-grow: 1; /* Distribute space evenly among buttons */
+                margin: 0 5px; /* Add some horizontal margin between buttons */
+            }
+        }
+
+        @media (max-width: 600px) { /* Further adjustments for mobile */
+            .container {
+                padding: 15px; /* Less padding on very small screens */
+                margin: 10px;
+            }
+            h1 {
+                font-size: 2em; /* Smaller heading on mobile */
+                margin-bottom: 15px;
+            }
+            .input-group label, .nav-buttons button, .controls button {
+                font-size: 14px; /* Smaller font sizes on mobile */
+            }
+            .input-group input[type="text"], .input-group select, .input-group textarea {
+                padding: 8px 12px; /* Smaller input padding */
+                font-size: 14px;
+            }
+             .controls button {
+                padding: 8px 14px; /* Adjust control button padding */
+            }
+        }
+
+        /* Loading Animation Styles (no changes) */
+        .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.5); /* Light background for overlay in light mode */ display: none; justify-content: center; align-items: center; border-radius: 12px; z-index: 10; /* Ensure it's on top */ }
+        body.dark-mode .loading-overlay { background-color: rgba(0, 0, 0, 0.7); /* Dark background for overlay in dark mode */ }
+
+        .loading-spinner { border: 4px solid #555555; border-radius: 50%; width: 45px; height: 45px; border-top-color: #3478f6; /* Apple Blue loading color */ animation: spin 1.2s linear infinite; }
+        body.dark-mode .loading-spinner { border-color: #ddd; border-top-color: #80cbc4; /* Teal loading color in dark mode */ }
+
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
