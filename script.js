@@ -211,6 +211,32 @@ async function callGeminiAPI(apiKey, prompt) {
     }
 }
 
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('API Error:', errorData);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error.message}`);
+        }
+
+        const responseData = await response.json();
+        if (responseData.candidates && responseData.candidates[0].content && responseData.candidates[0].content.parts && responseData.candidates[0].content.parts[0].text) {
+            return responseData.candidates[0].content.parts[0].text;
+        } else {
+            console.warn('Unexpected API response format:', responseData);
+            return 'Error: Could not extract text from API response.';
+        }
+    } catch (error) {
+        console.error('Error calling Gemini API:', error);
+        return `Error generating STEAM ideas: ${error.message}`;
+    }
+}
+
 
 function clearAll() {
     document.getElementById('topic').value = '';
