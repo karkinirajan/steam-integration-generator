@@ -1,80 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STEAM Integration Generator</title>
-    <link rel="stylesheet" href="style.css">
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>STEAM Integration Generator</title>
+ <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>STEAM Integration Generator</h1>
+ <div class="container">
+ <header class="header">
+ <h1>STEAM Integration Generator</h1>
+ </header>
 
-        <!-- Navigation Dashboard - Apple Inspired -->
-        <div class="nav-dashboard">
-            <div class="nav-section api-key-input-group">
-                <label for="api-key">Gemini API Key:</label>
-                <input type="password" id="api-key" placeholder="•••••••••••••••••••••••••••••••••••">
-                <span class="api-key-tip">You need a Gemini API key to use this tool. <a href="https://makersuite.google.com/app/apikey" target="_blank">Get one here</a>.</span>
-            </div>
-            <div class="nav-section nav-buttons">
-                <button id="about-button">About</button>
-                <button id="change-api-button">API Key</button>
-                <button id="toggle-mode-button">Dark Mode</button>
-            </div>
-        </div>
+ <!-- Navigation Dashboard -->
+ <nav class="nav-dashboard">
+ <div class="nav-section api-key-input-group">
+ <label for="api-key">Gemini API Key:</label>
+ <input type="password" id="api-key" placeholder="•••••••••••••••••••••••••••••••••••" aria-describedby="api-key-tip">
+ <span class="api-key-tip" id="api-key-tip">Need a Gemini API key? <a href="https://makersuite.google.com/app/apikey" target="_blank">Get one here</a>.</span>
+ </div>
+ <div class="nav-section nav-buttons">
+ <button id="about-button" aria-label="About this tool">About</button>
+ <button id="change-api-button" aria-label="Change API Key">API Key</button>
+ <button id="toggle-mode-button" aria-label="Toggle Dark Mode">Dark Mode</button>
+ </div>
+ </nav>
 
-        <div class="dashboard-area">
-            <div class="input-panel dashboard-container">
-                <h2 class="dashboard-header">Input Parameters</h2>
-                <div class="input-group">
-                    <label for="topic">Topic:</label>
-                    <input type="text" id="topic" placeholder="e.g., Photosynthesis">
-                </div>
-                <div class="input-group">
-                    <label for="outcomes">Learning Outcomes:</label>
-                    <input type="text" id="outcomes" placeholder="e.g., Understand the process, Identify key components (comma-separated)">
-                </div>
-                 <div class="input-group">
-                    <label for="age-group">Age Group:</label>
-                    <input type="text" id="age-group" placeholder="e.g., 10-12">
-                </div>
-                <div class="input-group">
-                    <label for="output-type">Output Type:</label>
-                    <select id="output-type">
-                        <option value="Ideas">Ideas</option>
-                        <option value="Lesson Plan">Lesson Plan</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="time-minutes">Class Time (minutes):</label>
-                    <input type="text" id="time-minutes" placeholder="e.g., 45">
-                </div>
-                <div class="input-group">
-                    <label for="location-name">Location (Lesson Plan):</label>
-                    <input type="text" id="location-name" placeholder="e.g., Outdoor garden (optional)">
-                </div>
+ <main class="dashboard-area">
+ <section class="input-panel dashboard-container">
+ <h2 class="dashboard-header">Input Parameters</h2>
+ <div class="input-group">
+ <label for="topic">Topic:</label>
+ <input type="text" id="topic" placeholder="e.g., Photosynthesis" aria-required="true">
+ </div>
+ <div class="input-group">
+ <label for="outcomes">Learning Outcomes:</label>
+ <input type="text" id="outcomes" placeholder="e.g., Understand the process, Identify key components (comma-separated)" aria-required="true">
+ </div>
+ <div class="input-group">
+ <label for="age-group">Age Group:</label>
+ <input type="text" id="age-group" placeholder="e.g., 10-12" aria-required="true">
+ </div>
+ <div class="input-group">
+ <label for="output-type">Output Type:</label>
+ <select id="output-type" aria-label="Select output type">
+ <option value="Ideas">Ideas</option>
+ <option value="Lesson Plan">Lesson Plan</option>
+ </select>
+ </div>
+ <div class="input-group">
+ <label for="time-minutes">Class Time (minutes):</label>
+ <input type="text" id ="time-minutes" placeholder="e.g., 45" aria-required="true">
+ </div>
+ <div class="input-group">
+ <label for="location-name">Location (Lesson Plan):</label>
+ <input type="text" id="location-name" placeholder="e.g., Outdoor garden (optional)">
+ </div>
+ <div class="controls">
+ <button id="generate-button" aria-label="Generate STEAM content">Generate</button>
+ <button id="clear-button" aria-label="Clear all inputs">Clear All</button>
+ <button id="export-button" aria-label="Export generated text">Export</button>
+ </div>
+ </section>
 
-                <div class="controls">
-                    <button id="generate-button">Generate</button>
-                    <button id="clear-button">Clear All</button>
-                    <button id="export-button">Export</button>
-                </div>
-            </div>
+ <section class="output-panel dashboard-container">
+ <h2 class="output-header">Generated Output</h2>
+ <div id="output-text" class="output-scroll" aria-live="polite"></div>
+ </section>
+ </main>
 
-            <div class="output-panel">
-                <h2 class="output-header">Generated Output</h2>
-                <div id="output-text" class="output-scroll"></div>
-            </div>
-        </div>
+ <!-- Loading Overlay -->
+ <div class="loading-overlay" id="loading-overlay" aria-hidden="true">
+ <div class="loading-spinner"></div>
+ </div>
+ </div>
 
-        <!-- Loading Overlay -->
-        <div class="loading-overlay" id="loading-overlay">
-            <div class="loading-spinner"></div>
-        </div>
-
-    </div>
-
-     <script src="script.js"></script>
+ <script src="script.js"></script>
 </body>
 </html>
