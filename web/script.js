@@ -91,14 +91,8 @@ async function generateSTEAM() {
 
  // No translation needed anymore - always English
 
- // --- Markdown to HTML Conversion ---
- let formattedText = generatedText;
- formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'); // Bold
- formattedText = formattedText.replace(/\*(.*?)\*/g, '<i>$1</i>'); // Italic
- formattedText = formattedText.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>'); // Code blocks
- formattedText = formattedText.replace(/`([^`]+)`/g, '<code>$1</code>'); // Inline code
- formattedText = formattedText.replace(/---/g, '<hr>'); // Horizontal rule
- formattedText = formattedText.replace(/\n/g, '<br>'); // New lines to <br> for HTML
+ // --- Markdown to HTML Conversion (format.js escapes the text before formatting it) ---
+ let formattedText = markdownToHtml(generatedText);
 
 
  document.getElementById('output-text').innerHTML = formattedText; // Set formatted HTML output
@@ -174,10 +168,15 @@ Structure the Lesson Plan clearly in Markdown format using the 5E headings (Enga
  }
 }
 
+// gemini-1.5-flash, used here before, is not on Google's current model list; gemini-3.6-flash was listed as Stable on 2026-11-12.
+const GEMINI_MODEL = 'gemini-3.6-flash';
+
 async function callGeminiAPI(apiKey, prompt) {
- const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey;
+ // The key goes in a header, not the URL: a URL ends up in browser history, proxies and logs.
+ const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
  const headers = {
- 'Content-Type': 'application/json'
+ 'Content-Type': 'application/json',
+ 'x-goog-api-key': apiKey
  };
  const data = {
  'contents': [{
@@ -193,14 +192,17 @@ async function callGeminiAPI(apiKey, prompt) {
  });
 
  if (!response.ok) {
- const errorData = await response.json();
- console.error('API Error:', errorData);
- throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error.message}`);
+ const errorData = await response.json().catch(() => ({}));
+ console.error('API Error:', response.status);
+ const detail = errorData.error && errorData.error.message ? errorData.error.message : 'no details';
+ throw new Error(`HTTP error! status: ${response.status}, message: ${detail}`);
  }
 
  const responseData = await response.json();
- if (responseData.candidates && responseData.candidates[0].content && responseData.candidates[0].content.parts && responseData.candidates[0].content.parts[0].text) {
- return responseData.candidates[0].content.parts[0].text;
+ const parts = responseData.candidates && responseData.candidates[0] && responseData.candidates[0].content
+ && responseData.candidates[0].content.parts;
+ if (parts && parts[0] && parts[0].text) {
+ return parts[0].text;
  } else {
  console.warn('Unexpected API response format:', responseData);
  return 'Error: Could not extract text from API response.';
