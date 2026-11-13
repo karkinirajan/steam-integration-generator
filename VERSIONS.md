@@ -9,7 +9,7 @@ What the project runs on and how each version was checked (2026-11-12). Where so
 | Python | 3.14 default; 3.11 to 3.14 tested | `.python-version`, `requires-python >=3.11` | The suite passes on 3.11, 3.12, 3.13 and 3.14. `google-genai` itself requires 3.11 or newer. |
 | Node.js | 26 | `.nvmrc`, CI | Only for the web page's tests (`node --test web`). Run locally on 26.13.0. |
 | uv | 0.13.7 | the lock was made with it | |
-| GitHub Actions | `checkout@v7`, `setup-node@v7`, `setup-uv@v10` | `.github/workflows/ci.yml` | The latest majors on 2026-11-12. The workflow has not run on GitHub. |
+| GitHub Actions | `checkout@v7`, `setup-node@v7`, `setup-uv@v10.3.3` | `.github/workflows/ci.yml` | The latest majors on 2026-11-12. setup-uv has no floating `v10` tag, so it is pinned to the full version. |
 
 ## Dependencies (`uv.lock`, 44 packages)
 
