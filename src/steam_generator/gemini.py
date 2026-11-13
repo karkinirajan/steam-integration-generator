@@ -1,13 +1,19 @@
 """The Gemini call, with errors turned into messages a teacher can act on."""
 from __future__ import annotations
 
+import warnings
 from collections.abc import Callable
 from typing import Any
 
-from google import genai
-from google.genai import errors
-
 from steam_generator.config import model_name
+
+# google-genai (3.2.0, still in 3.3.0) has invalid "\/" escapes in its own types.py. Python reports them as a
+# SyntaxWarning the first time it compiles that file, so the first run after an install printed two warnings.
+# The filter is limited to this import and to that one message; any other warning still shows.
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", message=r".*invalid escape sequence", category=SyntaxWarning)
+    from google import genai
+    from google.genai import errors
 
 MAX_DETAIL = 300
 

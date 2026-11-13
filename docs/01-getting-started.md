@@ -2,13 +2,7 @@
 
 ## Desktop app
 
-Requirements: Python 3.11 or newer, [uv](https://docs.astral.sh/uv/), a Gemini API key, and Tk for Python.
-
-| System | Tk |
-| --- | --- |
-| Debian, Ubuntu | `sudo apt install python3-tk` |
-| Arch | `sudo pacman -S tk` |
-| Windows, macOS (python.org installers) | included |
+Requirements: [uv](https://docs.astral.sh/uv/) and a Gemini API key. The project runs on Python 3.14 only. `uv sync` downloads uv's own Python 3.14 build, which includes Tk, so you don't need a system Python or a separate Tk package. (`pyproject.toml` sets `python-preference = "only-managed"`; a system Python without Tk fails with `ImportError: libtk8.6.so`.)
 
 ```sh
 uv sync

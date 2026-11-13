@@ -15,7 +15,7 @@ This is a fork of [rajat-ed/steam-integration-generator](https://github.com/raja
 
 ## Quick start
 
-You need Python 3.11 or newer, [uv](https://docs.astral.sh/uv/), a [Gemini API key](https://aistudio.google.com/app/apikey), and Python's Tk support (`python3-tk` on Debian and Ubuntu, `tk` on Arch).
+You need [uv](https://docs.astral.sh/uv/) and a [Gemini API key](https://aistudio.google.com/app/apikey). `uv sync` downloads Python 3.14 for you; that build includes Tk, so nothing else needs installing.
 
 ```sh
 git clone git@github.com:karkinirajan/steam-integration-generator.git
