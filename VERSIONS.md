@@ -6,7 +6,7 @@ What the project runs on and how each version was checked (2026-11-12). Where so
 
 | Component | Version | Where | Notes |
 | --- | --- | --- | --- |
-| Python | 3.14 default; 3.11 to 3.14 tested | `.python-version`, `requires-python >=3.11` | The suite passes on 3.11, 3.12, 3.13 and 3.14. `google-genai` itself requires 3.11 or newer. |
+| Python | 3.14 only | `.python-version`, `requires-python >=3.14`, ruff `py314`, mypy `3.14`, CI | uv's managed build (`python-preference = "only-managed"`), which bundles Tk 9.0. Older versions were dropped on 2026-11-13. |
 | Node.js | 26 | `.nvmrc`, CI | Only for the web page's tests (`node --test web`). Run locally on 26.13.0. |
 | uv | 0.13.7 | the lock was made with it | |
 | GitHub Actions | `checkout@v7`, `setup-node@v7`, `setup-uv@v10.3.3` | `.github/workflows/ci.yml` | The latest majors on 2026-11-12. setup-uv has no floating `v10` tag, so it is pinned to the full version. |
@@ -44,14 +44,14 @@ Declared floors equal these tested versions.
 
 | What | Result |
 | --- | --- |
-| pytest on Python 3.11, 3.12, 3.13, 3.14 | 166 passed on each |
+| pytest on Python 3.14.10 | 166 passed |
 | ruff, mypy (`src`) | clean |
 | `node --test web` on Node 26.13.0 | 19 passed |
-| The Tkinter window | **not run**: the Tk library (`libtk8.6.so`) is missing on the test machine |
+| The Tkinter window | starts and stays open on uv's Python 3.14.10 (Tk 9.0); the interface was not clicked through |
 | The Gemini call against the real API | **not run**: no API key was used; the service is tested against a fake client |
-| CI | has not run |
+| CI | the first runs failed at setup (`setup-uv@v10` tag does not exist); the pinned fix has not run on GitHub yet |
 
 ## Things to watch
 
-- `google-genai` 3.2.0 prints `SyntaxWarning`s at import under Python 3.14 (invalid `\/` escapes inside its own source). Harmless, but noisy; the mutation commands silence it with `-W ignore::SyntaxWarning`.
+- `google-genai` 3.2.0 (and 3.3.0) has invalid `\/` escapes in its own `types.py`, so Python 3.14 prints two `SyntaxWarning`s the first time it compiles that file. `src/steam_generator/gemini.py` ignores that one message around its import, and `pyproject.toml` does the same for pytest. Remove both once google-genai fixes it.
 - The browser version calls Google directly from the page with the user's key. That is how the original worked; a small server-side proxy would keep keys off the client but adds hosting.
