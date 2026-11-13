@@ -1,6 +1,6 @@
 # Deliberate bugs in the Python package, one at a time: each (name, file, old text, new text) must make the pytest suite fail.
 # Run from the repository root (the driver checks the suite is green first; do not edit the tree while it runs; each `old` must occur exactly once):
-#   uv run python tests/mutation/mutate.py tests/mutation/py_mutants.py -- uv run pytest -x -q -p no:cacheprovider -W ignore::SyntaxWarning
+#   uv run python tests/mutation/mutate.py tests/mutation/py_mutants.py -- uv run pytest -x -q -p no:cacheprovider
 #
 # Not mutated: src/steam_generator/app.py (the Tkinter window needs a display and the Tk library, which the test machine lacked).
 # Not listed, because it cannot change behaviour:

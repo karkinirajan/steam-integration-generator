@@ -13,7 +13,7 @@
 A passing suite only shows the tests agree with the code. `tests/mutation/` checks they would **disagree** if the code were wrong: it applies one deliberate bug at a time and the suite must fail for each.
 
 ```sh
-uv run python tests/mutation/mutate.py tests/mutation/py_mutants.py -- uv run pytest -x -q -p no:cacheprovider -W ignore::SyntaxWarning
+uv run python tests/mutation/mutate.py tests/mutation/py_mutants.py -- uv run pytest -x -q -p no:cacheprovider
 uv run python tests/mutation/mutate.py tests/mutation/js_mutants.py -- node --test web
 ```
 
@@ -21,7 +21,7 @@ The driver needs the suite to pass first, needs each pattern to match exactly on
 
 ## CI
 
-`.github/workflows/ci.yml` runs ruff, mypy and pytest on Python 3.11 to 3.14, and the web tests on Node 26.
+`.github/workflows/ci.yml` runs ruff, mypy and pytest on Python 3.14, and the web tests on Node 26.
 
 ## Not tested
 
