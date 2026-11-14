@@ -1,6 +1,6 @@
 import pytest
 
-from steam_generator.markup import Line, Run, parse, parse_inline
+from app.core.markup import Line, Run, parse, parse_inline
 
 
 def runs(text):

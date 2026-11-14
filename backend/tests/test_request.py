@@ -1,6 +1,6 @@
 import pytest
 
-from steam_generator.request import DEFAULT_LOCATION, InputError, parse_outcomes, validate
+from app.core.request import DEFAULT_LOCATION, InputError, parse_outcomes, validate
 
 
 def form(**over):

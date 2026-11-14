@@ -1,4 +1,4 @@
-from steam_generator.prompts import build_prompt
+from app.core.prompts import build_prompt
 
 
 def ideas(**over):

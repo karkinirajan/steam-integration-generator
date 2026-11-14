@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import BinaryIO
 from xml.sax.saxutils import escape
 
 from docx import Document
@@ -11,9 +12,14 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
-from steam_generator.markup import Line, parse
+from app.core.markup import Line, parse
 
 HEADING_POINTS = {1: 14, 2: 12}
+
+
+def _target(path: str | Path | BinaryIO) -> str | BinaryIO:
+    """A file name as a string, or an open binary stream (the API writes into memory) passed through unchanged."""
+    return str(path) if isinstance(path, str | Path) else path
 
 
 def pdf_can_render(text: str) -> bool:
@@ -25,7 +31,7 @@ def pdf_can_render(text: str) -> bool:
     return True
 
 
-def write_docx(markdown: str, path: str | Path) -> None:
+def write_docx(markdown: str, path: str | Path | BinaryIO) -> None:
     document = Document()
     normal = document.styles["Normal"]
     normal.font.name = "Helvetica"
@@ -45,7 +51,7 @@ def write_docx(markdown: str, path: str | Path) -> None:
                 part.font.size = Pt(HEADING_POINTS[line.level])
         if line.kind != "heading":
             paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-    document.save(str(path))
+    document.save(_target(path))
 
 
 def _pdf_markup(line: Line) -> str:
@@ -61,7 +67,7 @@ def _pdf_markup(line: Line) -> str:
     return "".join(parts)
 
 
-def write_pdf(markdown: str, path: str | Path, compress: bool = True) -> None:
+def write_pdf(markdown: str, path: str | Path | BinaryIO, compress: bool = True) -> None:
     sheet = getSampleStyleSheet()
     headings = {
         1: ParagraphStyle("Heading14", parent=sheet["Heading1"], fontSize=HEADING_POINTS[1], spaceAfter=12),
@@ -79,4 +85,4 @@ def write_pdf(markdown: str, path: str | Path, compress: bool = True) -> None:
             story.append(Paragraph(_pdf_markup(line), bullet, bulletText="•"))
         else:
             story.append(Paragraph(_pdf_markup(line), body))
-    SimpleDocTemplate(str(path), pagesize=letter, pageCompression=1 if compress else 0).build(story)
+    SimpleDocTemplate(_target(path), pagesize=letter, pageCompression=1 if compress else 0).build(story)

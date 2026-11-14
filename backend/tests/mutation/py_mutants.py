@@ -1,18 +1,17 @@
 # Deliberate bugs in the Python package, one at a time: each (name, file, old text, new text) must make the pytest suite fail.
-# Run from the repository root (the driver checks the suite is green first; do not edit the tree while it runs; each `old` must occur exactly once):
+# Run from backend/ (the driver checks the suite is green first; do not edit the tree while it runs; each `old` must occur exactly once):
 #   uv run python tests/mutation/mutate.py tests/mutation/py_mutants.py -- uv run pytest -x -q -p no:cacheprovider
 #
-# Not mutated: src/steam_generator/app.py (the Tkinter window needs a display and the Tk library, which the test machine lacked).
+# Not mutated: app/api (thin HTTP wrappers; covered by tests/test_api.py but not listed here yet).
 # Not listed, because it cannot change behaviour:
 #  - markup.py: `match.group(1) is not None` -> `match.group(2) is None` (the two groups of the alternation are never both set or both empty).
 
-CFG = "src/steam_generator/config.py"
-REQ = "src/steam_generator/request.py"
-PRM = "src/steam_generator/prompts.py"
-MKP = "src/steam_generator/markup.py"
-HIS = "src/steam_generator/history.py"
-EXP = "src/steam_generator/exports.py"
-GEM = "src/steam_generator/gemini.py"
+CFG = "app/core/config.py"
+REQ = "app/core/request.py"
+PRM = "app/core/prompts.py"
+MKP = "app/core/markup.py"
+EXP = "app/core/exports.py"
+GEM = "app/core/gemini.py"
 
 M = [
     # --- config
@@ -56,8 +55,6 @@ M = [
     ("markup: italic may start with a space", MKP, r"\*(?=[^\s*])(.+?)", r"\*(.+?)"),
     ("markup: italic may end with a space", MKP, r"(?<=[^\s*])\*", r"\*"),
     # --- history
-    ("history: six entries are kept", HIS, "MAX_ENTRIES = 5", "MAX_ENTRIES = 6"),
-    ("history: the live list is returned", HIS, "return list(self._entries)", "return self._entries"),
     # --- exports
     ("exports: the PDF is limited to ASCII", EXP, 'text.encode("cp1252")', 'text.encode("ascii")'),
     ("exports: the PDF encoder accepts everything", EXP, 'text.encode("cp1252")', 'text.encode("utf-8")'),
@@ -88,8 +85,14 @@ M = [
     ("gemini: the key is not trimmed", GEM, "self._api_key = api_key.strip()", "self._api_key = api_key"),
     ("gemini: blank text is a result", GEM, "if not text or not text.strip():", "if not text:"),
     ("gemini: missing text is a result", GEM, "if not text or not text.strip():", "if text is None:"),
-    ("gemini: API errors keep their cause", GEM, "exc.message, self._model)) from None", "exc.message, self._model)) from exc"),
-    ("gemini: network errors are not caught", GEM, "        except Exception as exc:  #", "        except KeyError as exc:  #"),
-    ("gemini: the prompt is not sent", GEM, "contents=prompt)", 'contents="")'),
-    ("gemini: the model is not sent", GEM, "model=self._model, contents", 'model="x", contents'),
+    ("gemini: generate errors keep their cause", GEM, "            raise self._friendly(exc) from None\n        text =", "            raise self._friendly(exc) from exc\n        text ="),
+    ("gemini: stream errors keep their cause", GEM, "            raise self._friendly(exc) from None\n        if not produced:", "            raise self._friendly(exc) from exc\n        if not produced:"),
+    ("gemini: API errors are not mapped", GEM, "        if isinstance(exc, errors.APIError):", "        if False:"),
+    ("gemini: the prompt is not sent", GEM, "generate_content(model=self._model, contents=prompt)", 'generate_content(model=self._model, contents="")'),
+    ("gemini: the model is not sent", GEM, "generate_content(model=self._model,", 'generate_content(model="x",'),
+    ("gemini: the stream prompt is not sent", GEM, "generate_content_stream(model=self._model, contents=prompt)", 'generate_content_stream(model=self._model, contents="")'),
+    ("gemini: the stream model is not sent", GEM, "generate_content_stream(model=self._model,", 'generate_content_stream(model="x",'),
+    ("gemini: whitespace-only stream is a result", GEM, "produced = produced or bool(text.strip())", "produced = True"),
+    ("gemini: an empty stream is a result", GEM, "        if not produced:\n            raise GenerationError(NO_TEXT)", "        if False:\n            raise GenerationError(NO_TEXT)"),
+    ("gemini: empty pieces are yielded", GEM, "                if text:\n", "                if True:\n"),
 ]

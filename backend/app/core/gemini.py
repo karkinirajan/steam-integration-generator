@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from typing import Any
 
-from steam_generator.config import model_name
+from app.core.config import model_name
 
 # google-genai (3.2.0, still in 3.3.0) has invalid "\/" escapes in its own types.py. Python reports them as a
 # SyntaxWarning the first time it compiles that file, so the first run after an install printed two warnings.
@@ -16,6 +16,7 @@ with warnings.catch_warnings():
     from google.genai import errors
 
 MAX_DETAIL = 300
+NO_TEXT = "The model returned no text (a safety filter may have blocked it). Try rewording the topic."
 
 
 class GenerationError(Exception):
@@ -52,17 +53,40 @@ class GeminiService:
     def model(self) -> str:
         return self._model
 
-    def generate(self, prompt: str) -> str:
+    def _get_client(self) -> Any:
         if self._client is None:
             self._client = self._factory(self._api_key)
+        return self._client
+
+    def _friendly(self, exc: Exception) -> GenerationError:
+        if isinstance(exc, errors.APIError):
+            return GenerationError(describe_api_error(exc.code, exc.message, self._model))
+        # network and transport failures: report the kind, never the details
+        return GenerationError(f"Could not reach the Gemini service ({type(exc).__name__}). Check your internet connection.")
+
+    def generate(self, prompt: str) -> str:
+        client = self._get_client()
         try:
-            response = self._client.models.generate_content(model=self._model, contents=prompt)
-        except errors.APIError as exc:
-            raise GenerationError(describe_api_error(exc.code, exc.message, self._model)) from None
-        except Exception as exc:  # network and transport failures: report the kind, never the details
-            kind = type(exc).__name__
-            raise GenerationError(f"Could not reach the Gemini service ({kind}). Check your internet connection.") from None
+            response = client.models.generate_content(model=self._model, contents=prompt)
+        except Exception as exc:
+            raise self._friendly(exc) from None
         text = getattr(response, "text", None)
         if not text or not text.strip():
-            raise GenerationError("The model returned no text (a safety filter may have blocked it). Try rewording the topic.")
+            raise GenerationError(NO_TEXT)
         return str(text)
+
+    def stream(self, prompt: str) -> Iterator[str]:
+        """Yield the response in pieces as the model writes it. Errors, including ones raised mid-stream, become
+        GenerationError, and a stream that produced no text at all is reported the same way as an empty ``generate``."""
+        client = self._get_client()
+        produced = False
+        try:
+            for chunk in client.models.generate_content_stream(model=self._model, contents=prompt):
+                text = getattr(chunk, "text", None)
+                if text:
+                    produced = produced or bool(text.strip())
+                    yield str(text)
+        except Exception as exc:
+            raise self._friendly(exc) from None
+        if not produced:
+            raise GenerationError(NO_TEXT)
