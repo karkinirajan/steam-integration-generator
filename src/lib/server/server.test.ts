@@ -149,6 +149,37 @@ describe("http helpers", () => {
     await assert.rejects(readJson(req(JSON.stringify({ x: "y".repeat(20_000) }))), (e: HttpProblem) => e.status === 413);
   });
 
+  test("readJson stops reading an endless body once it passes the cap, with no Content-Length", async () => {
+    let pulled = 0;
+    const endless = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled++;
+        controller.enqueue(new Uint8Array(4096).fill(32));
+      },
+    });
+    const request = new Request("http://local/api", { method: "POST", body: endless, duplex: "half" } as RequestInit);
+    await assert.rejects(readJson(request), (e: HttpProblem) => e.status === 413);
+    assert.ok(pulled < 10, `read ${pulled} chunks`);
+  });
+
+  test("readJson refuses a declared Content-Length over the cap before reading", async () => {
+    const request = new Request("http://local/api", { method: "POST", body: "{}", headers: { "content-length": "999999" } });
+    await assert.rejects(readJson(request), (e: HttpProblem) => e.status === 413);
+  });
+
+  test("readJson decodes multi-byte text split across chunks", async () => {
+    const bytes = new TextEncoder().encode(JSON.stringify({ topic: "नेपाली" }));
+    const split = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(bytes.slice(0, 13));
+        controller.enqueue(bytes.slice(13));
+        controller.close();
+      },
+    });
+    const request = new Request("http://local/api", { method: "POST", body: split, duplex: "half" } as RequestInit);
+    assert.deepEqual(await readJson(request), { topic: "नेपाली" });
+  });
+
   test("credentials: a known provider, a model and a key-shaped key", () => {
     const ok = credentials(req("", `  ${KEY}  `), { provider: "groq", model: " llama " });
     assert.deepEqual([ok.provider.id, ok.model, ok.apiKey], ["groq", "llama", KEY]);
