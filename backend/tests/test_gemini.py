@@ -3,8 +3,8 @@ from types import SimpleNamespace
 import pytest
 from google.genai import errors
 
-from steam_generator.config import DEFAULT_MODEL
-from steam_generator.gemini import MAX_DETAIL, GeminiService, GenerationError, describe_api_error
+from app.core.config import DEFAULT_MODEL
+from app.core.gemini import MAX_DETAIL, GeminiService, GenerationError, describe_api_error
 
 KEY = "test-key-" + "x" * 30
 
@@ -140,6 +140,45 @@ class TestGenerate:
 
         with pytest.raises(ValueError, match="bad configuration"):
             GeminiService(KEY, client_factory=broken).generate("p")
+
+
+class StreamClient(FakeClient):
+    def __init__(self, pieces=("a", "b"), error=None):
+        super().__init__(error=error)
+        self._pieces = pieces
+
+    def generate_content_stream(self, model, contents):
+        self.calls.append((model, contents))
+        for piece in self._pieces:
+            yield SimpleNamespace(text=piece)
+        if self._error:
+            raise self._error
+
+
+class TestStream:
+    def test_it_yields_each_piece(self):
+        assert list(service(StreamClient(("one ", "two"))).stream("p")) == ["one ", "two"]
+
+    def test_empty_pieces_are_skipped(self):
+        assert list(service(StreamClient(("x", None, "", "y"))).stream("p")) == ["x", "y"]
+
+    def test_it_sends_the_model_and_prompt(self):
+        client = StreamClient()
+        list(service(client, model="m").stream("the prompt"))
+        assert client.calls == [("m", "the prompt")]
+
+    def test_only_whitespace_is_the_no_text_error(self):
+        with pytest.raises(GenerationError, match="safety filter"):
+            list(service(StreamClient((" ", "\n"))).stream("p"))
+
+    def test_a_mid_stream_api_error_is_friendly(self):
+        with pytest.raises(GenerationError, match="rate limit"):
+            list(service(StreamClient(("a",), error=api_error(429))).stream("p"))
+
+    def test_a_network_failure_hides_the_key(self):
+        with pytest.raises(GenerationError) as caught:
+            list(service(StreamClient((), error=ConnectionError(KEY))).stream("p"))
+        assert KEY not in str(caught.value) and caught.value.__cause__ is None
 
 
 def test_the_model_property():

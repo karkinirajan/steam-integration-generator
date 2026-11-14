@@ -1,7 +1,7 @@
 import pytest
 
-from steam_generator import config
-from steam_generator.config import DEFAULT_MODEL, api_key_from_env, looks_like_api_key, model_name
+from app.core import config
+from app.core.config import DEFAULT_MODEL, api_key_from_env, looks_like_api_key, model_name
 
 # Ids the application used before (not on Google's current lists) and one that Google lists as shut down.
 OLD_IDS = {"gemini-pro", "gemini-1.5-flash", "gemini-2.0-flash"}

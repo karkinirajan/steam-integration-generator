@@ -1,35 +1,28 @@
 [project]
-name = "steam-integration-generator"
-version = "1.0.0"
-description = "STEAM integration ideas and 5E lesson plans from the Google Gemini API: a desktop app and a browser page."
-readme = "README.md"
+name = "steam-integration-api"
+version = "2.0.0"
+description = "The API behind the STEAM Integration Generator: STEAM ideas and 5E lesson plans from the Google Gemini API, with DOCX and PDF export."
+readme = "../README.md"
 license = { text = "MIT" }
 requires-python = ">=3.14"
 dependencies = [
+    "fastapi[standard]>=0.162.7",
     "google-genai>=3.2.0",
     "python-docx>=1.2.0",
     "reportlab>=5.1.0",
 ]
-
-[project.scripts]
-steam-generator = "steam_generator.app:main"
 
 [dependency-groups]
 dev = [
     "pytest>=9.2.0",
     "ruff>=0.17.4",
     "mypy>=2.4.1",
+    "httpx>=0.28.1",
 ]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/steam_generator"]
 
 [tool.uv]
 python-preference = "only-managed"
+package = false
 
 [tool.ruff]
 line-length = 130
@@ -40,7 +33,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
 # The two prompt templates are long paragraphs of prose, carried over unchanged from the original application.
-"src/steam_generator/prompts.py" = ["E501"]
+"app/core/prompts.py" = ["E501"]
 # One mutant per line: wrapping would hide which text is replaced by which.
 "tests/mutation/*_mutants.py" = ["E501"]
 
@@ -56,5 +49,6 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# Same google-genai escape warning as in src/steam_generator/gemini.py; tests/test_gemini.py imports google.genai directly.
+pythonpath = ["."]
+# Same google-genai escape warning as in app/core/gemini.py; tests/test_gemini.py imports google.genai directly.
 filterwarnings = ["ignore:.*invalid escape sequence:SyntaxWarning"]

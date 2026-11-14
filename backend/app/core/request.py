@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from steam_generator.config import LANGUAGES, OUTPUT_TYPES
+from app.core.config import LANGUAGES, OUTPUT_TYPES
 
 DEFAULT_LOCATION = "General Classroom Setting"
 

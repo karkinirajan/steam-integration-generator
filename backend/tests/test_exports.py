@@ -4,7 +4,7 @@ import pytest
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-from steam_generator.exports import pdf_can_render, write_docx, write_pdf
+from app.core.exports import pdf_can_render, write_docx, write_pdf
 
 SAMPLE = "**Engage**\n\nStart with *a question* about **water**.\n* first point\n* second point\n# Big heading"
 

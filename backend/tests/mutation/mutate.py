@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Mutation check: apply deliberate bugs one at a time and require the test suite to fail for each.
 
-Usage, from the repository root::
+Usage, from backend/::
 
-    python tools/mutation/mutate.py tools/mutation/mutants.py [name-filter ...] -- <test command ...>
+    python tests/mutation/mutate.py tests/mutation/py_mutants.py [name-filter ...] -- <test command ...>
 
 The mutants file defines ``M = [(name, file, old, new), ...]``. Each ``old`` text must occur exactly once in its
 file. The suite must pass unmutated first (a failing baseline would make every mutant look killed). A mutant counts
