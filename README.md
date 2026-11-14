@@ -12,7 +12,7 @@ This is a fork of [rajat-ed/steam-integration-generator](https://github.com/raja
 - **Streaming:** the answer appears, already formatted, as the model writes it.
 - **English or Nepali:** the model writes in the chosen language directly.
 - **DOCX and PDF:** built in your browser from the same parsed lines you see on screen, so the files match the preview. PDF cannot show Nepali letters; DOCX can, and the page says so.
-- **History:** past answers stay in your browser (localStorage). The provider and model are remembered; the key never is.
+- **Nothing is stored:** no database, no history, no browser storage. The key, the form and the answer live in the open tab only and are gone when it closes. Download or copy what you want to keep.
 
 ## Quick start
 
@@ -35,10 +35,10 @@ There is nothing to configure: no server-side keys and no environment variables.
 src/app/                  The page, and the two route handlers
   api/verify/route.ts       POST: check a key and a model with the provider
   api/generate/route.ts     POST: stream the answer as Server-Sent Events
-src/components/           Generator (state), CredentialsPanel, LessonForm, ResultPanel, ResultView, HistoryPanel
+src/components/           Generator (state), CredentialsPanel, LessonForm, ResultPanel, ResultView
 src/lib/core/             Shared by page and server: providers, form validation, prompts, the Markdown parser
 src/lib/server/           Server only: the model call (Vercel AI SDK), the key/model check, error messages, request helpers
-src/lib/                  Browser: API client, SSE parser, DOCX/PDF export, history
+src/lib/                  Browser: API client, SSE parser, DOCX/PDF export
 docs/                     The guide
 ```
 

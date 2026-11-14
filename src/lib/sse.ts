@@ -1,5 +1,5 @@
 /** A Server-Sent Event as the API sends it: a name and a JSON payload. */
-export type SseEvent = { event: string; data: unknown };
+type SseEvent = { event: string; data: unknown };
 
 /** One event in the wire format. JSON never contains a raw newline, so the payload is always one `data:` line. */
 export function encodeEvent(event: string, data: unknown): string {

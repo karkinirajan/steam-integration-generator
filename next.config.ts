@@ -16,7 +16,8 @@ const nextConfig: NextConfig = {
     ];
   },
   cacheComponents: true,
-  partialPrefetching: true,
+  // Do not write AGENTS.md (instructions for AI coding tools) into the project.
+  agentRules: false,
   turbopack: {
     rules: {
       "*.css": {

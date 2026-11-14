@@ -4,7 +4,7 @@
  * Shared by the page (labels, hints) and the server (endpoints).
  */
 
-export type ProviderKind = "openai" | "anthropic" | "google" | "openai-compatible";
+type ProviderKind = "openai" | "anthropic" | "google" | "openai-compatible";
 
 export type Provider = {
   id: string;
@@ -29,8 +29,6 @@ export const PROVIDERS = [
   { id: "xai", label: "xAI", kind: "openai-compatible", baseURL: "https://api.x.ai/v1", keyUrl: "https://console.x.ai", exampleModel: "grok-4" },
   { id: "together", label: "Together AI", kind: "openai-compatible", baseURL: "https://api.together.xyz/v1", keyUrl: "https://api.together.ai/settings/api-keys", exampleModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo" },
 ] as const satisfies readonly Provider[];
-
-export type ProviderId = (typeof PROVIDERS)[number]["id"];
 
 export function findProvider(id: unknown): Provider | undefined {
   return PROVIDERS.find((p) => p.id === id);

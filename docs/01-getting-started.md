@@ -26,8 +26,9 @@ Nothing needs configuring. The server holds no keys of its own.
 2. **Lesson.** Fill in the topic, the learning outcomes (comma-separated) and the age group, and choose a language. Choose **Ideas** or **Lesson Plan**; a lesson plan also asks for the class time in minutes and an optional location.
 3. **Generate.** The answer streams in already formatted. **Stop** cancels it.
 4. **Download** a DOCX or a PDF, or **Copy** the text. For Nepali, use DOCX.
-5. **History** keeps past answers in this browser. Click one to reopen it; **Clear** removes them all.
+
+Nothing is saved anywhere. Reloading or closing the tab clears the key, the form and the answer, so download or copy what you want to keep.
 
 ## The key
 
-The key lives only in the open tab. It is sent to this app's own server in a header with each check or generation, passed to the provider for that one call, and never logged, stored, or written to history. Reloading the page clears it. The provider and model are remembered in the browser for convenience.
+The key lives only in the open tab. It is sent to this app's own server in a header with each check or generation, passed to the provider for that one call, and never logged or stored.

@@ -34,7 +34,7 @@ No test touches the network.
 - **In a browser, with the two API responses mocked:**
   - the key check, then a streamed answer rendered with headings, bold, italic and bullets;
   - the DOCX and PDF downloads (the PDF was opened and matches the screen);
-  - history surviving a reload, the model remembered, and the key cleared.
+  - the key cleared on reload.
 
 ## CI
 
