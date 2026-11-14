@@ -21,6 +21,9 @@ Replaces the Tkinter app (`src/steam_generator/app.py`, `steam.py`) and the stat
    - `POST /api/export/{docx|pdf}`: returns the file.
    - Validation reuses `request.validate`, so `InputError` becomes a 422 response with the user-facing message.
 4. **Nepali PDF:** register Noto Sans Devanagari when the font file is present; otherwise keep the cp1252 check.
+   *Deferred:* Devanagari needs text shaping (conjuncts, vowel signs placed before consonants). Embedding the font
+   alone would draw the letters in the wrong order, and ReportLab's shaping support was not verified for the locked
+   version. PDF still refuses Nepali with a pointer to DOCX.
 5. **Frontend:** Next.js 16, TypeScript and Tailwind v4 in `frontend/`.
    - Form, a streamed result, DOCX and PDF export, history, and dark mode.
    - The result renders from the same line model as the exports (the backend returns the parsed lines on `done`).

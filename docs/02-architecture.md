@@ -2,33 +2,50 @@
 
 ## Layers
 
-Everything that can run without a display is in plain modules with no Tkinter import, so it is testable. Only `app.py` touches Tk.
+```text
+browser ──► Next.js (frontend/)  ──/api rewrite──►  FastAPI (backend/app/api)  ──►  app/core  ──►  Gemini API
+             form, streaming view,                   HTTP only: schemas,              prompts, validation,
+             history (localStorage)                  key header, SSE, files           Gemini service, parser, exports
+```
 
-| Module | Job |
-| --- | --- |
-| `request.py` | Checks the form (`validate`) and returns an immutable `Request`, or raises `InputError` with a message for the person. |
-| `prompts.py` | `build_prompt(...)`: the two templates. The text is the original application's. |
-| `gemini.py` | `GeminiService.generate(prompt)`; turns every failure into a `GenerationError` whose message is safe to show. |
-| `markup.py` | Parses the model's light Markdown into `Line`s of `Run`s (bold, italic) with headings and bullets. |
-| `exports.py` | `write_docx` and `write_pdf`, both driven by the same parse. `pdf_can_render` says whether the PDF's fonts can draw the text. |
-| `history.py`, `config.py` | The last five uses; the model name and the shape of an API key. |
-| `app.py` | The window. |
+- **`backend/app/core/`** has no HTTP code. It is the code the old desktop app was built on, moved here unchanged except for streaming and in-memory export:
+  - `request.py` checks the form and raises `InputError` with a message written for a teacher.
+  - `prompts.py` holds the original two prompt templates, plus a language instruction.
+  - `gemini.py` calls the model (`generate` and `stream`) and turns every failure into a `GenerationError` whose text never contains the key.
+  - `markup.py` parses the model's light Markdown into lines of styled runs.
+  - `exports.py` writes those lines to DOCX and PDF.
+- **`backend/app/api/`** is a thin wrapper over `app/core`. No prompt, validation or formatting logic lives there.
+- **`frontend/`** is one page. `Generator` owns the form and its state, `lib/api.ts` is the API client, `lib/sse.ts` parses the event stream, and `ResultView` draws the parsed lines.
 
-## A request
+## Endpoints
 
-1. `validate` turns the form into a `Request` (a lesson plan needs a class time; ideas do not).
-2. `build_prompt` builds the text. For a language other than English it appends an instruction to write the whole answer in that language and to keep the same `**bold**` and `*italic*` markers.
-3. A worker thread calls `GeminiService.generate`. The thread makes no Tk calls: it puts its result on a queue, and the window polls the queue every 100 ms from the main thread.
-4. The response is kept **as returned** (`SteamApp.markdown`) and shown through `markup.parse`. Exports use the stored response, not the displayed text, so the formatting survives.
+| Method and path | Body | Answer |
+| --- | --- | --- |
+| `GET /api/health` | | `{"status": "ok"}` |
+| `GET /api/options` | | The output types, the languages, and the model |
+| `POST /api/generate` | Form fields, plus the `X-Gemini-Key` header | `text/event-stream`: `chunk` events with text, then `done` with `{text, lines}`, or `error` with a message |
+| `POST /api/export/docx` and `/api/export/pdf` | `{"text": ...}` | The file |
 
-## Errors and the key
+Status codes:
 
-`gemini.describe_api_error` maps the status code to a message a teacher can act on: a rejected key, a missing model (names it and `GEMINI_MODEL`), a rate limit, a service problem. Network failures report only the kind of exception. The key is never put in a message, and the original exception is not chained, so a traceback cannot carry request details. The key shape check (`config.looks_like_api_key`) only catches typos; Google decides whether a key is valid.
+- **401:** the key is missing or mistyped.
+- **422:** the form is invalid. `detail` holds the message from `request.py`, or pydantic's list for oversized fields.
+- **422 (PDF export):** the text contains letters the PDF fonts cannot draw.
 
-## Nepali
+Errors from Gemini come back inside the stream as `error` events, since the 200 status has already been sent by then.
 
-The old version translated the English answer with `googletrans`, an unofficial endpoint whose pinned dependencies conflict with the current Google SDK. The model now writes in the chosen language directly. PDF export cannot draw Devanagari with its built-in fonts, so the window offers DOCX instead.
+## One parser for screen and files
 
-## The web page
+While the answer streams, the page shows the raw text. When the `done` event arrives, it carries `lines`, the output of `markup.parse`, and the page draws those. Those are the same lines `exports.py` writes to DOCX and PDF, so what you see is what you download. The old static page had a separate JavaScript parser that could disagree with the Python one; it is gone.
 
-`web/index.html` with `script.js` (the page), `format.js` (pure helpers) and `style.css`. The key travels in an `x-goog-api-key` header (Google's endpoint allows it from browser origins), not in the URL. `format.js` escapes the model's text before formatting it, so nothing the model writes becomes markup. `format.js` also loads under Node, which is how it is tested.
+`parse_inline` runs in linear time. It used to be a regex with a lazy `.+?`, which took quadratic time on lines full of unclosed `*`. Because `/api/export` needs no key, that was a way to make the server do minutes of work per request. The regex is kept as a reference, and a test checks that the scanner agrees with it.
+
+## The API key
+
+The key lives in React state, sent in a header to the page's own origin, and is forwarded once to Google. The backend never logs or stores it, and `GenerationError` messages are built so they cannot contain it (`tests/test_gemini.py` and `tests/test_api.py` check this). History entries hold the form and the answer, never the key.
+
+## Limits
+
+- Text fields are capped at 500 characters and the outcomes at 2,000.
+- Export text is capped at 50,000 characters, which is about a second of PDF work. A long lesson plan is around 15,000.
+- There is no rate limiting in the app. Add it at the reverse proxy before exposing the service publicly.

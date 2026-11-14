@@ -1,28 +1,47 @@
 # 1. Getting started
 
-## Desktop app
+## Requirements
 
-Requirements: [uv](https://docs.astral.sh/uv/) and a Gemini API key. The project runs on Python 3.14 only. `uv sync` downloads uv's own Python 3.14 build, which includes Tk, so you don't need a system Python or a separate Tk package. (`pyproject.toml` sets `python-preference = "only-managed"`; a system Python without Tk fails with `ImportError: libtk8.6.so`.)
+- [uv](https://docs.astral.sh/uv/). `uv sync` downloads Python 3.14 for you.
+- Node.js 26 (see `.nvmrc`) and pnpm 12.
+- A [Gemini API key](https://aistudio.google.com/app/apikey). Each person using the page brings their own.
+
+## Run for development
 
 ```sh
+cd backend
 uv sync
-export GEMINI_API_KEY=your-key        # optional: pre-fills the key dialog
-uv run steam-generator
+uv run fastapi dev app/main.py        # http://localhost:8000, interactive API docs at /docs
 ```
 
-`uv run python steam.py` and `uv run python -m steam_generator` start the same program.
+```sh
+cd frontend
+pnpm install
+pnpm dev                              # http://localhost:3000
+```
 
-Fill in the topic, the learning outcomes (separated by commas) and the age group. Choose **Ideas** or **Lesson Plan**. A lesson plan also needs the class time in minutes; the location is optional (it defaults to a general classroom). Choose English or Nepali, then **Generate**. Use **Export Document** for DOCX or PDF. Menus: **API** changes the key, **History** shows the last five uses, **About** credits the original author.
+The page calls `/api/...` on its own origin, and Next.js forwards those calls to `API_URL` (default `http://localhost:8000`). The browser never talks to FastAPI directly, so there is no CORS setup in development.
 
-## Browser version
+## Run with Docker
 
-Open `web/index.html` in a browser. Type your key into the page; it is kept in that tab's memory only. The page needs no server and no build step. It has Ideas and Lesson Plan modes, a dark mode, and a plain-text export.
+```sh
+docker compose up --build             # http://localhost:3000
+```
 
-## Settings
+Only the web container publishes a port. It forwards `/api` to the `api` container on the compose network.
 
-| Variable | Default | Effect |
-| --- | --- | --- |
-| `GEMINI_API_KEY` | none | Pre-fills the key dialog. `.env` files are not read. |
-| `GEMINI_MODEL` | `gemini-3.6-flash` | The model the desktop app calls. |
+## Configuration
 
-If Google retires the default model, the app shows "The model '...' was not found. Set GEMINI_MODEL to a model your key can use." Set `GEMINI_MODEL` to a current one (the model list is at <https://ai.google.dev/gemini-api/docs/models>). The web page's model is the `GEMINI_MODEL` constant at the top of the API section of `web/script.js`.
+| Variable | Where | Default | What it does |
+| --- | --- | --- | --- |
+| `GEMINI_MODEL` | backend | `gemini-3.6-flash` | The model to call. `GET /api/options` reports it and the page shows it under the button. |
+| `ALLOWED_ORIGINS` | backend | `http://localhost:3000` | Comma-separated origins for CORS, only needed if a browser calls the API from another origin. |
+| `API_URL` | frontend | `http://localhost:8000` | Where `/api` is forwarded. `next build` fixes it, so set it at build time (the compose file passes `http://api:8000`). |
+
+## Using it
+
+1. Paste your Gemini API key. It stays in that tab's memory only; reloading the page clears it.
+2. Fill in the topic, the learning outcomes (comma-separated) and the age group. Choose **Ideas** or **Lesson Plan**. A lesson plan also asks for the class time in minutes and an optional location.
+3. Press **Generate**. The answer streams in; **Stop** cancels it.
+4. Download it as DOCX or PDF. For Nepali, use DOCX.
+5. Past answers appear under **History**, in this browser only. **Clear** removes them.
