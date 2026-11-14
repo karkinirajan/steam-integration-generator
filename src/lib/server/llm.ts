@@ -7,7 +7,7 @@ import type { Provider } from "../core/providers.ts";
 import { describeError, GenerationError, NO_TEXT } from "./errors.ts";
 
 /** The AI SDK model for a provider, key and model id. Server only: the key never leaves this process except to the provider. */
-export function languageModel(provider: Provider, apiKey: string, modelId: string): LanguageModel {
+function languageModel(provider: Provider, apiKey: string, modelId: string): LanguageModel {
   switch (provider.kind) {
     case "anthropic":
       return createAnthropic({ apiKey })(modelId);

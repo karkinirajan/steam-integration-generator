@@ -1,7 +1,7 @@
 import { findProvider, looksLikeApiKey, looksLikeModelId, type Provider } from "../core/providers.ts";
 
 /** Header carrying the caller's own key. It is used for one call and never logged or stored. */
-export const KEY_HEADER = "x-api-key";
+const KEY_HEADER = "x-api-key";
 
 /** Largest request body accepted, in bytes. The form is small; this only stops abuse. */
 const MAX_BODY = 16_384;

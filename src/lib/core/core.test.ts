@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { INLINE_REFERENCE, parse, parseInline, type Run } from "./markup.ts";
+import { parse, parseInline, type Run } from "./markup.ts";
 import { buildPrompt } from "./prompts.ts";
 import { looksLikeApiKey, looksLikeModelId, PROVIDERS, findProvider } from "./providers.ts";
 import { DEFAULT_LOCATION, InputError, MAX_FIELD, parseOutcomes, validate } from "./request.ts";
@@ -99,6 +99,12 @@ describe("providers", () => {
 });
 
 const r = (text: string, bold = false, italic = false): Run => ({ text, bold, italic });
+
+/**
+ * The inline rules written as a regex: the reference parseInline must agree with. Not used by the app, because the lazy
+ * `.+?` re-scans the rest of the line from every unclosed `*`, which is quadratic.
+ */
+const INLINE_REFERENCE = /\*\*(?=\S)(.+?)(?<=\S)\*\*|\*(?=[^\s*])(.+?)(?<=[^\s*])\*/g;
 
 function byReference(text: string): Run[] {
   const runs: Run[] = [];

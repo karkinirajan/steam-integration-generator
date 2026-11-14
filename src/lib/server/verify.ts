@@ -1,15 +1,7 @@
 import type { Provider } from "../core/providers.ts";
 import { describeError, GenerationError } from "./errors.ts";
 
-/**
- * Check that a key works and that the model exists for it, without generating anything (no tokens are spent).
- *
- * - OpenAI, Anthropic, Gemini: fetch the one model with the key. 401/403 means the key, 404 means the model.
- * - OpenAI-compatible vendors: list the models with the key (rejects a bad key), then look for the model in the list.
- * - OpenRouter: its model list is public, so the key is checked on its own key endpoint first.
- *
- * Only hosts from the fixed provider list are contacted. Throws GenerationError with a message for the user.
- */
+/** `fetch`, replaceable so tests run without a network. */
 export type FetchFn = (url: string, init: RequestInit) => Promise<Response>;
 
 const TIMEOUT_MS = 10_000;
@@ -42,6 +34,15 @@ function modelIds(listing: unknown): string[] {
   return Array.isArray(items) ? items.map((m) => String((m as { id?: unknown })?.id ?? "")).filter(Boolean) : [];
 }
 
+/**
+ * Check that a key works and that the model exists for it, without generating anything (no tokens are spent).
+ *
+ * - OpenAI, Anthropic, Gemini: fetch the one model with the key. 401/403 means the key, 404 means the model.
+ * - OpenAI-compatible vendors: list the models with the key (rejects a bad key), then look for the model in the list.
+ * - OpenRouter: its model list is public, so the key is checked on its own key endpoint first.
+ *
+ * Only hosts from the fixed provider list are contacted. Throws GenerationError with a message for the user.
+ */
 export async function verifyCredentials(provider: Provider, apiKey: string, model: string, fetchFn: FetchFn = fetch): Promise<void> {
   const bearer = { Authorization: `Bearer ${apiKey}` };
   try {

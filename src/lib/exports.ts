@@ -7,7 +7,7 @@ import { jsPDF } from "jspdf";
 
 import { parse, type Line } from "./core/markup.ts";
 
-export const HEADING_POINTS = { 1: 14, 2: 12 } as const;
+const HEADING_POINTS = { 1: 14, 2: 12 } as const;
 const BODY_POINTS = 11;
 
 // Windows-1252 letters above Latin-1 that the PDF's built-in fonts can draw.

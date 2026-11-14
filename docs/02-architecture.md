@@ -8,7 +8,7 @@ browser                                   Next.js server                        
 Generator (state)                         app/api/verify    ── lib/server/verify ──►  model lookup (no tokens)
   CredentialsPanel, LessonForm  ──fetch──►app/api/generate  ── lib/server/llm    ──►  streamed completion
   ResultPanel ◄── SSE ─────────────────── (chunk… done | error)
-  lib/exports (DOCX, PDF), lib/history
+  lib/exports (DOCX, PDF)
                  └──────────── lib/core: providers, request validation, prompts, markup ────────────┘
 ```
 
@@ -23,7 +23,7 @@ Generator (state)                         app/api/verify    ── lib/server/ve
   - `errors.ts` turns every failure into a message that names the cause and never contains the key.
   - `http.ts` reads and checks the request.
 - **`src/app/api/*/route.ts`** are thin. No prompt, validation or formatting logic lives there.
-- **Components:** `Generator` owns the state; the panels only render.
+- **Components:** `Generator` owns the state, in memory only; the panels only render. There is no database and no browser storage.
 
 ## Endpoints
 

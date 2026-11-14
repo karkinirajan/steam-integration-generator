@@ -27,7 +27,6 @@
 }
 
 @theme inline {
-  --color-bg: var(--bg);
   --color-panel: var(--panel);
   --color-field: var(--field);
   --color-fg: var(--fg);
@@ -37,7 +36,6 @@
   --color-on-accent: var(--on-accent);
   --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 body {

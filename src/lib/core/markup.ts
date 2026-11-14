@@ -13,12 +13,6 @@ const BULLET = /^[*\-•]\s+(.*)$/;
 const run = (text: string, bold = false, italic = false): Run => ({ text, bold, italic });
 const isSpace = (ch: string) => /\s/.test(ch);
 
-/**
- * The inline rules as a regex, kept as the reference: `parseInline` implements them in linear time and the tests check the
- * two agree. The regex itself re-scans the rest of the line from every unclosed `*`, which is quadratic.
- */
-export const INLINE_REFERENCE = /\*\*(?=\S)(.+?)(?<=\S)\*\*|\*(?=[^\s*])(.+?)(?<=[^\s*])\*/g;
-
 /** For every index k, the first closing `**` (bold) and closing `*` (italic) at or after k, or -1. One right-to-left pass. */
 function nextClosers(text: string): [Int32Array, Int32Array] {
   const n = text.length;

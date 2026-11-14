@@ -32,28 +32,25 @@ export async function verify(creds: Credentials, signal?: AbortSignal): Promise<
   if (!response.ok) throw await errorFrom(response);
 }
 
-/** Stream a generation. `onChunk` receives text as the model writes it; resolves with the full text. */
+/** Stream a generation. `onChunk` receives text as the model writes it; resolves when the answer is complete. */
 export async function generate(
   creds: Credentials,
   form: FormInput,
   onChunk: (text: string) => void,
   signal?: AbortSignal,
-): Promise<string> {
+): Promise<void> {
   const response = await post("/api/generate", creds, { form }, signal);
   if (!response.ok || !response.body) throw await errorFrom(response);
 
   const parser = new SseParser();
   const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-  let text = "";
   for (;;) {
     const { value, done } = await reader.read();
     if (done) break;
     for (const { event, data } of parser.push(value)) {
-      if (event === "chunk" && typeof data === "string") {
-        text += data;
-        onChunk(data);
-      } else if (event === "error") throw new ApiError(String(data));
-      else if (event === "done") return text;
+      if (event === "chunk" && typeof data === "string") onChunk(data);
+      else if (event === "error") throw new ApiError(String(data));
+      else if (event === "done") return;
     }
   }
   throw new ApiError("The connection closed before the answer was complete. Try again.");
