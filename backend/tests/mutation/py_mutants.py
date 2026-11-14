@@ -4,7 +4,7 @@
 #
 # Not mutated: app/api (thin HTTP wrappers; covered by tests/test_api.py but not listed here yet).
 # Not listed, because it cannot change behaviour:
-#  - markup.py: `match.group(1) is not None` -> `match.group(2) is None` (the two groups of the alternation are never both set or both empty).
+#  - markup.py: `italic_close[start + 2]` -> `italic_close[start + 1]` (text[start + 1] was just checked not to be a `*`, so it is never a closer).
 
 CFG = "app/core/config.py"
 REQ = "app/core/request.py"
@@ -49,11 +49,17 @@ M = [
     ("markup: a hyphen is not a bullet", MKP, r'_BULLET = re.compile(r"^[*\-•]\s+(.*)$")', r'_BULLET = re.compile(r"^[*•]\s+(.*)$")'),
     ("markup: blank lines are text", MKP, "        if not stripped:\n", "        if False:\n"),
     ("markup: indentation is kept", MKP, "        stripped = raw.strip()\n", "        stripped = raw.rstrip()\n"),
-    ("markup: an empty run precedes a match at the start", MKP, "        if match.start() > position:\n", "        if match.start() >= position:\n"),
-    ("markup: an empty run follows the last match", MKP, "    if position < len(text):\n", "    if position <= len(text):\n"),
-    ("markup: bold may start with a space", MKP, r"\*\*(?=\S)(.+?)", r"\*\*(.+?)"),
-    ("markup: italic may start with a space", MKP, r"\*(?=[^\s*])(.+?)", r"\*(.+?)"),
-    ("markup: italic may end with a space", MKP, r"(?<=[^\s*])\*", r"\*"),
+    ("markup: an empty run precedes a bold match at the start", MKP, "                if start > position:\n                    runs.append(Run(text[position:start]))\n                runs.append(Run(text[start + 2", "                if start >= position:\n                    runs.append(Run(text[position:start]))\n                runs.append(Run(text[start + 2"),
+    ("markup: an empty run follows the last match", MKP, "    if position < n:\n", "    if position <= n:\n"),
+    ("markup: bold may start with a space", MKP, 'if text.startswith("**", start) and after and not after.isspace():', 'if text.startswith("**", start) and after:'),
+    ("markup: italic may start with a space", MKP, 'if after and not after.isspace() and after != "*":', 'if after and after != "*":'),
+    ("markup: italic may start with a star", MKP, 'if after and not after.isspace() and after != "*":', 'if after and not after.isspace():'),
+    ("markup: italic may end with a space", MKP, 'text[k] == "*" and not before.isspace() and before', 'text[k] == "*" and before'),
+    ("markup: italic may end after a star", MKP, 'and not before.isspace() and before != "*" else', 'and not before.isspace() else'),
+    ("markup: bold may end with a space", MKP, 'text.startswith("**", k) and not before.isspace()', 'text.startswith("**", k)'),
+    ("markup: bold content may be empty", MKP, "close = bold_close[start + 3]", "close = bold_close[start + 2]"),
+    ("markup: italic is tried before bold", MKP, "        after = text[start + 2] if start + 2 < n else \"\"\n        if text.startswith", "        after = \"\"\n        if text.startswith"),
+    ("markup: the closer table skips the last character", MKP, "for k in range(n - 1, 0, -1):", "for k in range(n - 2, 0, -1):"),
     # --- history
     # --- exports
     ("exports: the PDF is limited to ASCII", EXP, 'text.encode("cp1252")', 'text.encode("ascii")'),

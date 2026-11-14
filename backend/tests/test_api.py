@@ -170,3 +170,10 @@ class TestCors:
             },
         )
         assert response.status_code == 200 and "x-gemini-key" in response.headers["access-control-allow-headers"].lower()
+
+
+def test_export_text_over_the_cap_is_refused(client):
+    from app.api.schemas import MAX_TEXT
+
+    assert client.post("/api/export/docx", json={"text": "a" * (MAX_TEXT + 1)}).status_code == 422
+    assert client.post("/api/export/docx", json={"text": "a" * MAX_TEXT}).status_code == 200

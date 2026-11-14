@@ -1,6 +1,10 @@
+import itertools
+import random
+import time
+
 import pytest
 
-from app.core.markup import Line, Run, parse, parse_inline
+from app.core.markup import _INLINE, Line, Run, parse, parse_inline
 
 
 def runs(text):
@@ -95,3 +99,41 @@ class TestLines:
     def test_a_realistic_response(self):
         lines = parse("**Title**\n\nIntro with *emphasis*.\n\n* one\n* two")
         assert [line.kind for line in lines] == ["heading", "blank", "text", "blank", "bullet", "bullet"]
+
+
+class TestLinearScanMatchesTheRegex:
+    """parse_inline is a linear rewrite of the _INLINE regex; the regex stays as the reference for what it must produce."""
+
+    @staticmethod
+    def by_regex(text):
+        runs, position = [], 0
+        for match in _INLINE.finditer(text):
+            if match.start() > position:
+                runs.append(Run(text[position : match.start()]))
+            if match.group(1) is not None:
+                runs.append(Run(match.group(1), bold=True))
+            else:
+                runs.append(Run(match.group(2), italic=True))
+            position = match.end()
+        if position < len(text):
+            runs.append(Run(text[position:]))
+        return tuple(runs)
+
+    def test_every_short_string_over_the_tricky_alphabet(self):
+        for length in range(1, 8):
+            for chars in itertools.product("* a", repeat=length):
+                text = "".join(chars)
+                assert parse_inline(text) == self.by_regex(text), text
+
+    def test_random_longer_strings(self):
+        rng = random.Random(1234)
+        for _ in range(3000):
+            text = "".join(rng.choice("**  ab\t:x") for _ in range(rng.randint(1, 40)))
+            assert parse_inline(text) == self.by_regex(text), text
+
+    @pytest.mark.parametrize("unit", ["*a ", "**a ", "* a*", "a** "])
+    def test_unclosed_openers_take_linear_time(self, unit):
+        text = unit * 100_000
+        started = time.perf_counter()
+        parse_inline(text)
+        assert time.perf_counter() - started < 2  # the regex took minutes on inputs this size

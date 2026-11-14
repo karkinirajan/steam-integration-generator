@@ -9,7 +9,9 @@ from pydantic import BaseModel, Field
 from app.core.markup import Line
 
 MAX_FIELD = 500
-MAX_TEXT = 200_000
+# A long lesson plan is around 15,000 characters. PDF and DOCX writing is CPU-bound and /api/export needs no key, so the
+# cap keeps one request to about a second of work (200,000 characters took up to 9 s).
+MAX_TEXT = 50_000
 
 
 class GenerateIn(BaseModel):
