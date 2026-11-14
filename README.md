@@ -1,75 +1,63 @@
 # STEAM Integration Generator
 
-Generates creative **STEAM** (Science, Technology, Engineering, Arts, Mathematics) integration ideas, or a full **5E lesson plan**, for a topic, learning outcomes and an age group, using the Google Gemini API. It comes in two forms: a desktop app (Python, Tkinter) and a single static web page.
+Generates creative **STEAM** (Science, Technology, Engineering, Arts, Mathematics) integration ideas, or a full **5E lesson plan**, for a topic, learning outcomes and an age group. One Next.js app; you choose the AI provider and model, and bring your own key.
 
-This is a fork of [rajat-ed/steam-integration-generator](https://github.com/rajat-ed/steam-integration-generator) (MIT). The original author is still credited in the app's About box.
+This is a fork of [rajat-ed/steam-integration-generator](https://github.com/rajat-ed/steam-integration-generator) (MIT). The original author is credited in the page footer.
 
 ## Features
 
-- **Ideas or a lesson plan:** STEAM integration ideas, or a 5E lesson plan (Engage, Explore, Explain, Elaborate, Evaluate) for a class time and a location.
-- **English or Nepali output:** the model writes in the chosen language directly.
-- **Formatted output:** headings, bold, italic and bullets, on screen and in the exported files.
-- **Export to DOCX or PDF** (PDF cannot show Nepali letters; use DOCX for those, and the app says so).
-- **Usage history:** the last five uses, in memory.
-- **Browser version:** `web/index.html` does the same in a browser, with a dark mode and a plain-text export.
+- **Ideas or a lesson plan:** STEAM integration ideas, or a 5E lesson plan (Engage, Explore, Explain, Elaborate, Evaluate) for a class time and a location. The prompts are the original app's.
+- **Any provider, any model:** OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, Mistral, DeepSeek, xAI or Together AI. You type the exact model id.
+- **Key and model checked first:** before anything is generated, the server asks the provider whether the key works and the model exists. This spends no tokens, and the error says which of the two is wrong.
+- **Streaming:** the answer appears, already formatted, as the model writes it.
+- **English or Nepali:** the model writes in the chosen language directly.
+- **DOCX and PDF:** built in your browser from the same parsed lines you see on screen, so the files match the preview. PDF cannot show Nepali letters; DOCX can, and the page says so.
+- **Nothing is stored:** no database, no history, no browser storage. The key, the form and the answer live in the open tab only and are gone when it closes. Download or copy what you want to keep.
 
 ## Quick start
 
-You need [uv](https://docs.astral.sh/uv/) and a [Gemini API key](https://aistudio.google.com/app/apikey). `uv sync` downloads Python 3.14 for you; that build includes Tk, so nothing else needs installing.
+You need Node.js 26 (see `.nvmrc`), pnpm 12, and an API key from one of the providers.
 
 ```sh
 git clone git@github.com:karkinirajan/steam-integration-generator.git
 cd steam-integration-generator
-uv sync
-uv run steam-generator          # or: uv run python steam.py
+pnpm install
+pnpm dev          # http://localhost:3000
 ```
 
-The app asks for your API key when it starts. To skip typing it, set `GEMINI_API_KEY` first. The key is held in memory only and never written to disk.
+Production: `pnpm build && pnpm start`, or `docker build -t steam-generator . && docker run -p 3000:3000 steam-generator`.
 
-For the browser version, open `web/index.html` in a browser and type your key into the page. It stays in that tab's memory.
-
-## Configuration
-
-| Variable | Default | What it does |
-| --- | --- | --- |
-| `GEMINI_API_KEY` | none | Fills in the key dialog. The app does not read `.env` files; export the variable in your shell. |
-| `GEMINI_MODEL` | `gemini-3.6-flash` | The model to call (desktop app). The web page has the same default in `web/script.js`. |
+There is nothing to configure: no server-side keys and no environment variables.
 
 ## Project structure
 
 ```text
-src/steam_generator/    The desktop app
-  app.py                  The Tkinter window (the only module that needs a display)
-  prompts.py              The two prompt templates
-  request.py              Checks what was typed and builds a request
-  gemini.py               The Gemini call, with friendly errors
-  markup.py               Parses the model's Markdown into styled lines (one parser for screen, DOCX and PDF)
-  exports.py              DOCX and PDF writers
-  history.py, config.py   The last five uses; the model and key settings
-steam.py                Compatibility entry point (python steam.py)
-web/                    The browser version: index.html, script.js, format.js, style.css
-tests/                  pytest suite and the mutation checks (tests/mutation)
-docs/                   The guide, a work log, and sample exports from the old version
+src/app/                  The page, and the two route handlers
+  api/verify/route.ts       POST: check a key and a model with the provider
+  api/generate/route.ts     POST: stream the answer as Server-Sent Events
+src/components/           Generator (state), CredentialsPanel, LessonForm, ResultPanel, ResultView
+src/lib/core/             Shared by page and server: providers, form validation, prompts, the Markdown parser
+src/lib/server/           Server only: the model call (Vercel AI SDK), the key/model check, error messages, request helpers
+src/lib/                  Browser: API client, SSE parser, DOCX/PDF export
+docs/                     The guide
 ```
 
 ## Documentation
 
-The guide in [docs/](docs/README.md) has four short chapters: getting started, architecture, testing and quality, and the record of the last modernisation pass ([docs/work-done.md](docs/work-done.md)). [VERSIONS.md](VERSIONS.md) lists the versions used and how they were checked.
+The guide in [docs/](docs/README.md) has three chapters: getting started, architecture, and testing and quality. [VERSIONS.md](VERSIONS.md) lists the versions used and how they were checked.
 
-## Testing
+## Checks
 
 ```sh
-uv run ruff check . && uv run mypy src && uv run pytest -q    # Python
-node --test web                                                # the web page's formatting code
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-The tests do not touch the network. The Tkinter window has no automated test (see [docs/03-testing-and-quality.md](docs/03-testing-and-quality.md)).
+The tests do not touch the network.
 
 ## Known limits
 
-- PDF export cannot draw Devanagari (Nepali). Use DOCX for Nepali output.
-- The browser version sends your key from the page to Google. Use a key you can revoke.
-- The window itself (`app.py`) was written against the previous code's layout and checked for types and lint, but not run in this pass.
+- PDF cannot draw Devanagari (Nepali). Use DOCX for Nepali output.
+- No rate limiting is built in. Every model call spends the caller's own key, but put the app behind a proxy that limits requests per IP before exposing it publicly.
 
 ## License
 

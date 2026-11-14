@@ -1,57 +1,39 @@
 # Versions
 
-What the project runs on and how each version was checked (2026-11-12). Where something could not be verified, it says so.
+What the project runs on and how each version was chosen (2026-11-14).
 
 ## Runtimes and tooling
 
 | Component | Version | Where | Notes |
 | --- | --- | --- | --- |
-| Python | 3.14 only | `.python-version`, `requires-python >=3.14`, ruff `py314`, mypy `3.14`, CI | uv's managed build (`python-preference = "only-managed"`), which bundles Tk 9.0. Older versions were dropped on 2026-11-13. |
-| Node.js | 26 | `.nvmrc`, CI | Only for the web page's tests (`node --test web`). Run locally on 26.13.0. |
-| uv | 0.13.7 | the lock was made with it | |
-| GitHub Actions | `checkout@v7`, `setup-node@v7`, `setup-uv@v10.3.3` | `.github/workflows/ci.yml` | The latest majors on 2026-11-12. setup-uv has no floating `v10` tag, so it is pinned to the full version. |
+| Node.js | 26 | `.nvmrc`, CI, `node:26-slim` image | Run locally on 26.13.0. Tests run the TypeScript sources directly (Node strips the types). |
+| pnpm | 12.20.0 | `packageManager` in `package.json`, CI, image | Node 26 no longer bundles corepack, so CI and the image install pnpm with npm. |
+| GitHub Actions | `checkout@v7`, `setup-node@v7` | `.github/workflows/ci.yml` | |
 
-## Dependencies (`uv.lock`, 44 packages)
+## Dependencies (`pnpm-lock.yaml`)
 
-| Package | Locked | Role |
+Runtime dependencies are pinned exactly. Except where noted, each was the newest release that was at least about two weeks old when installed, to leave time for a bad release to be noticed and pulled.
+
+| Package | Version | Role |
 | --- | --- | --- |
-| `google-genai` | 3.2.0 | The Gemini SDK |
-| `python-docx` | 1.2.0 | DOCX export |
-| `reportlab` | 5.1.0 | PDF export |
-| `pytest` | 9.2.0 | tests (dev) |
-| `ruff` | 0.17.4 | lint (dev) |
-| `mypy` | 2.4.1 | types (dev) |
+| `next` | 16.4.6 | The framework (scaffolded with `create-next-app@16.4.6`) |
+| `react`, `react-dom` | 19.3.0 | UI |
+| `ai` | 7.0.159 | Vercel AI SDK: one streaming interface for every provider (released 2026-10-30) |
+| `@ai-sdk/openai` | 4.0.106 | OpenAI, and every OpenAI-compatible vendor |
+| `@ai-sdk/anthropic` | 4.0.94 | Anthropic |
+| `@ai-sdk/google` | 4.0.109 | Google Gemini |
+| `docx` | 9.15.1 | DOCX export, in the browser (9.15.4 was published the same morning and was skipped) |
+| `jspdf` | 4.2.1 | PDF export, in the browser (latest; released 2026-03-17) |
+| `tailwindcss` | 4.3.3 | Styles (dev) |
+| `typescript` | 5.9.3 | Types (dev) |
+| `eslint` | 9.39.5 | Lint, with `eslint-config-next` 16.4.6 (dev). pnpm notes 9.x is deprecated in favour of 10.x; `eslint-config-next` 16.4.6 was scaffolded with 9. |
+| `fflate` | 0.8.3 | Unzips the DOCX in a test (dev); already in the tree as a dependency of `docx` |
 
-Declared floors equal these tested versions.
+All four AI SDK packages resolve to one `@ai-sdk/provider-utils` (5.0.72) and one `zod` (4.6.7).
 
-### Replaced
-
-| Was | Why |
-| --- | --- |
-| `google-generativeai` 0.8.3 | PyPI marks the package "Development Status :: 7 - Inactive" (0.8.6 is its last release). `google-genai` is the maintained SDK. |
-| `googletrans` 4.0.0rc1 | An unofficial translation endpoint, and it pins `httpx` 0.13.3 and other old packages that cannot coexist with the current Google SDK. The model now writes in Nepali directly. |
-| `tk` 0.1.0 | An unrelated PyPI package. Tkinter is part of Python's standard library. |
-| the `pip freeze` in `requirements.txt` | It omitted `reportlab` (which the app imports) and pinned 42 packages by hand. `pyproject.toml` declares three dependencies and `uv.lock` pins the rest. |
-
-## The Gemini model
-
-| Where | Default | Checked |
-| --- | --- | --- |
-| Desktop app (`GEMINI_MODEL`), web page (`GEMINI_MODEL` in `script.js`) | `gemini-3.6-flash` | Google's models page lists it as **Stable**, and its deprecations page says no shutdown date is announced. The models page calls it "previous-generation", and a newer Flash model (`gemini-3.8-flash`) was listed as New; this was not adopted. |
-| Before | `gemini-pro` (desktop), `gemini-1.5-flash` (web) | Neither id appears on Google's models page or its deprecations page, so they cannot be relied on. Whether the API still serves them was **not** established (a keyless probe could not tell). `gemini-2.0-flash` is listed as shut down. |
-
-## Where it was run
-
-| What | Result |
-| --- | --- |
-| pytest on Python 3.14.10 | 166 passed |
-| ruff, mypy (`src`) | clean |
-| `node --test web` on Node 26.13.0 | 19 passed |
-| The Tkinter window | starts and stays open on uv's Python 3.14.10 (Tk 9.0); the interface was not clicked through |
-| The Gemini call against the real API | **not run**: no API key was used; the service is tested against a fake client |
-| CI | the first runs failed at setup (`setup-uv@v10` tag does not exist); the pinned fix has not run on GitHub yet |
+Install scripts are not run. `pnpm-workspace.yaml` lists the packages that ask to run them (`sharp`, `unrs-resolver`, `core-js`) as denied.
 
 ## Things to watch
 
-- `google-genai` 3.2.0 (and 3.3.0) has invalid `\/` escapes in its own `types.py`, so Python 3.14 prints two `SyntaxWarning`s the first time it compiles that file. `src/steam_generator/gemini.py` ignores that one message around its import, and `pyproject.toml` does the same for pytest. Remove both once google-genai fixes it.
-- The browser version calls Google directly from the page with the user's key. That is how the original worked; a small server-side proxy would keep keys off the client but adds hosting.
+- **eslint 10:** move to it once `eslint-config-next` supports it.
+- **OpenRouter key check:** it relies on `GET /api/v1/key`. That endpoint rejected a made-up key with 401 on 2026-11-14, which matches what the check expects, but a real key has not been tried.

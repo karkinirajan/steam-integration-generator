@@ -1,28 +1,34 @@
 # 1. Getting started
 
-## Desktop app
+## Requirements
 
-Requirements: [uv](https://docs.astral.sh/uv/) and a Gemini API key. The project runs on Python 3.14 only. `uv sync` downloads uv's own Python 3.14 build, which includes Tk, so you don't need a system Python or a separate Tk package. (`pyproject.toml` sets `python-preference = "only-managed"`; a system Python without Tk fails with `ImportError: libtk8.6.so`.)
+- Node.js 26 (see `.nvmrc`) and pnpm 12.
+- An API key from one of the supported providers: OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, Mistral, DeepSeek, xAI or Together AI.
+
+## Run
 
 ```sh
-uv sync
-export GEMINI_API_KEY=your-key        # optional: pre-fills the key dialog
-uv run steam-generator
+pnpm install
+pnpm dev                              # development, http://localhost:3000
+pnpm build && pnpm start              # production
+docker build -t steam-generator .     # or as a container
+docker run -p 3000:3000 steam-generator
 ```
 
-`uv run python steam.py` and `uv run python -m steam_generator` start the same program.
+Nothing needs configuring. The server holds no keys of its own.
 
-Fill in the topic, the learning outcomes (separated by commas) and the age group. Choose **Ideas** or **Lesson Plan**. A lesson plan also needs the class time in minutes; the location is optional (it defaults to a general classroom). Choose English or Nepali, then **Generate**. Use **Export Document** for DOCX or PDF. Menus: **API** changes the key, **History** shows the last five uses, **About** credits the original author.
+## Use
 
-## Browser version
+1. **Model.** Choose a provider and type the exact model id (the placeholder shows an example). Paste your API key, then press **Check key and model**.
+   - The badge turns **Ready** when the provider accepts the key and knows the model.
+   - Otherwise the message says which one is wrong.
+   - Changing any of the three fields means checking again.
+2. **Lesson.** Fill in the topic, the learning outcomes (comma-separated) and the age group, and choose a language. Choose **Ideas** or **Lesson Plan**; a lesson plan also asks for the class time in minutes and an optional location.
+3. **Generate.** The answer streams in already formatted. **Stop** cancels it.
+4. **Download** a DOCX or a PDF, or **Copy** the text. For Nepali, use DOCX.
 
-Open `web/index.html` in a browser. Type your key into the page; it is kept in that tab's memory only. The page needs no server and no build step. It has Ideas and Lesson Plan modes, a dark mode, and a plain-text export.
+Nothing is saved anywhere. Reloading or closing the tab clears the key, the form and the answer, so download or copy what you want to keep.
 
-## Settings
+## The key
 
-| Variable | Default | Effect |
-| --- | --- | --- |
-| `GEMINI_API_KEY` | none | Pre-fills the key dialog. `.env` files are not read. |
-| `GEMINI_MODEL` | `gemini-3.6-flash` | The model the desktop app calls. |
-
-If Google retires the default model, the app shows "The model '...' was not found. Set GEMINI_MODEL to a model your key can use." Set `GEMINI_MODEL` to a current one (the model list is at <https://ai.google.dev/gemini-api/docs/models>). The web page's model is the `GEMINI_MODEL` constant at the top of the API section of `web/script.js`.
+The key lives only in the open tab. It is sent to this app's own server in a header with each check or generation, passed to the provider for that one call, and never logged or stored.

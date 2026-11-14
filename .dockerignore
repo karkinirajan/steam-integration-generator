@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.github
+.remember
+.playwright-mcp
+docs
+Dockerfile
+*.md
