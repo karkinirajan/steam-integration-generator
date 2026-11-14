@@ -26,7 +26,7 @@ class GenerationError(Exception):
 def describe_api_error(code: int | None, message: str | None, model: str) -> str:
     detail = (message or "").strip().replace("\n", " ")[:MAX_DETAIL]
     if code == 400 and "api key" in detail.lower():
-        return "The API key was not accepted. Check it under API > Change API Key."
+        return "The API key was not accepted. Check the key you pasted, or create a new one in Google AI Studio."
     if code in (401, 403):
         return f"The API key is missing, invalid, or not allowed to use this model (error {code})."
     if code == 404:
