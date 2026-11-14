@@ -3,49 +3,74 @@
 ## Layers
 
 ```text
-browser ──► Next.js (frontend/)  ──/api rewrite──►  FastAPI (backend/app/api)  ──►  app/core  ──►  Gemini API
-             form, streaming view,                   HTTP only: schemas,              prompts, validation,
-             history (localStorage)                  key header, SSE, files           Gemini service, parser, exports
+browser                                   Next.js server                         provider
+───────                                   ──────────────                         ────────
+Generator (state)                         app/api/verify    ── lib/server/verify ──►  model lookup (no tokens)
+  CredentialsPanel, LessonForm  ──fetch──►app/api/generate  ── lib/server/llm    ──►  streamed completion
+  ResultPanel ◄── SSE ─────────────────── (chunk… done | error)
+  lib/exports (DOCX, PDF), lib/history
+                 └──────────── lib/core: providers, request validation, prompts, markup ────────────┘
 ```
 
-- **`backend/app/core/`** has no HTTP code. It is the code the old desktop app was built on, moved here unchanged except for streaming and in-memory export:
-  - `request.py` checks the form and raises `InputError` with a message written for a teacher.
-  - `prompts.py` holds the original two prompt templates, plus a language instruction.
-  - `gemini.py` calls the model (`generate` and `stream`) and turns every failure into a `GenerationError` whose text never contains the key.
-  - `markup.py` parses the model's light Markdown into lines of styled runs.
-  - `exports.py` writes those lines to DOCX and PDF.
-- **`backend/app/api/`** is a thin wrapper over `app/core`. No prompt, validation or formatting logic lives there.
-- **`frontend/`** is one page. `Generator` owns the form and its state, `lib/api.ts` is the API client, `lib/sse.ts` parses the event stream, and `ResultView` draws the parsed lines.
+- **`src/lib/core/`** is plain TypeScript used on both sides.
+  - `providers.ts` is the fixed provider list.
+  - `request.ts` checks the form and raises `InputError` with a message written for a teacher.
+  - `prompts.ts` holds the original two templates.
+  - `markup.ts` is the Markdown parser.
+- **`src/lib/server/`** holds the code that touches keys and providers.
+  - `llm.ts` builds the AI SDK model for any provider and streams the answer.
+  - `verify.ts` checks a key and a model without generating anything.
+  - `errors.ts` turns every failure into a message that names the cause and never contains the key.
+  - `http.ts` reads and checks the request.
+- **`src/app/api/*/route.ts`** are thin. No prompt, validation or formatting logic lives there.
+- **Components:** `Generator` owns the state; the panels only render.
 
 ## Endpoints
 
-| Method and path | Body | Answer |
+Both take JSON with `provider` and `model`, and the key in the `X-Api-Key` header.
+
+| Endpoint | Body | Answer |
 | --- | --- | --- |
-| `GET /api/health` | | `{"status": "ok"}` |
-| `GET /api/options` | | The output types, the languages, and the model |
-| `POST /api/generate` | Form fields, plus the `X-Gemini-Key` header | `text/event-stream`: `chunk` events with text, then `done` with `{text, lines}`, or `error` with a message |
-| `POST /api/export/docx` and `/api/export/pdf` | `{"text": ...}` | The file |
+| `POST /api/verify` | `{provider, model}` | `200 {ok: true}`, or an error with `detail` |
+| `POST /api/generate` | `{provider, model, form}` | `text/event-stream`: `chunk` events with text, then `done`, or one `error` |
 
 Status codes:
 
-- **401:** the key is missing or mistyped.
-- **422:** the form is invalid. `detail` holds the message from `request.py`, or pydantic's list for oversized fields.
-- **422 (PDF export):** the text contains letters the PDF fonts cannot draw.
+- **401:** the key is missing or not key-shaped.
+- **413:** the request body is too large.
+- **422:** the provider is unknown, the model id is malformed, the form is invalid, or the provider rejected the key or the model. `detail` says which.
 
-Errors from Gemini come back inside the stream as `error` events, since the 200 status has already been sent by then.
+Provider failures during generation arrive inside the stream as `error` events, because the 200 status has already been sent by then.
+
+## Providers
+
+`PROVIDERS` in `providers.ts` is a fixed list, and the server only ever contacts those hosts. The caller picks one by id, so a request cannot make the server fetch an arbitrary URL. OpenRouter alone reaches hundreds of models from most vendors.
+
+Generation goes through the [Vercel AI SDK](https://ai-sdk.dev):
+
+- **OpenAI, Anthropic, Gemini:** their own SDK providers.
+- **Every other vendor:** the OpenAI provider pointed at that vendor's base URL, using the Chat Completions API.
+
+## Checking the key and the model
+
+`verifyCredentials` spends no tokens:
+
+| Provider | How |
+| --- | --- |
+| OpenAI, Anthropic, Gemini | Fetch that one model with the key. 401/403 means the key; 404 means the model. Anthropic and Gemini resolve aliases this way. |
+| Groq, Mistral, DeepSeek, xAI, Together | List the models with the key (a bad key fails here), then look for the model in the list. |
+| OpenRouter | Its model list is public, so the key is first checked on `GET /api/v1/key`, then the model is looked up in the list. |
+
+The Gemini key goes in the `x-goog-api-key` header, never in a URL.
 
 ## One parser for screen and files
 
-While the answer streams, the page shows the raw text. When the `done` event arrives, it carries `lines`, the output of `markup.parse`, and the page draws those. Those are the same lines `exports.py` writes to DOCX and PDF, so what you see is what you download. The old static page had a separate JavaScript parser that could disagree with the Python one; it is gone.
+The page parses the streamed text with `markup.parse` as it arrives and draws the lines. The DOCX and PDF are built in the browser from the same lines, so the downloads match the preview.
 
-`parse_inline` runs in linear time. It used to be a regex with a lazy `.+?`, which took quadratic time on lines full of unclosed `*`. Because `/api/export` needs no key, that was a way to make the server do minutes of work per request. The regex is kept as a reference, and a test checks that the scanner agrees with it.
-
-## The API key
-
-The key lives in React state, sent in a header to the page's own origin, and is forwarded once to Google. The backend never logs or stores it, and `GenerationError` messages are built so they cannot contain it (`tests/test_gemini.py` and `tests/test_api.py` check this). History entries hold the form and the answer, never the key.
+`parseInline` runs in linear time. The obvious regex version, kept in the tests as the reference, re-scans the rest of the line from every unclosed `*`, which is quadratic.
 
 ## Limits
 
-- Text fields are capped at 500 characters and the outcomes at 2,000.
-- Export text is capped at 50,000 characters, which is about a second of PDF work. A long lesson plan is around 15,000.
-- There is no rate limiting in the app. Add it at the reverse proxy before exposing the service publicly.
+- Text fields are capped at 500 characters, the outcomes at 2,000, and the request body at 16 KB.
+- Each provider call has one retry. The key check times out after 10 seconds.
+- There is no rate limiting in the app. Add it at the reverse proxy before exposing the app publicly.

@@ -2,46 +2,32 @@
 
 ## Requirements
 
-- [uv](https://docs.astral.sh/uv/). `uv sync` downloads Python 3.14 for you.
 - Node.js 26 (see `.nvmrc`) and pnpm 12.
-- A [Gemini API key](https://aistudio.google.com/app/apikey). Each person using the page brings their own.
+- An API key from one of the supported providers: OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, Mistral, DeepSeek, xAI or Together AI.
 
-## Run for development
-
-```sh
-cd backend
-uv sync
-uv run fastapi dev app/main.py        # http://localhost:8000, interactive API docs at /docs
-```
+## Run
 
 ```sh
-cd frontend
 pnpm install
-pnpm dev                              # http://localhost:3000
+pnpm dev                              # development, http://localhost:3000
+pnpm build && pnpm start              # production
+docker build -t steam-generator .     # or as a container
+docker run -p 3000:3000 steam-generator
 ```
 
-The page calls `/api/...` on its own origin, and Next.js forwards those calls to `API_URL` (default `http://localhost:8000`). The browser never talks to FastAPI directly, so there is no CORS setup in development.
+Nothing needs configuring. The server holds no keys of its own.
 
-## Run with Docker
+## Use
 
-```sh
-docker compose up --build             # http://localhost:3000
-```
+1. **Model.** Choose a provider and type the exact model id (the placeholder shows an example). Paste your API key, then press **Check key and model**.
+   - The badge turns **Ready** when the provider accepts the key and knows the model.
+   - Otherwise the message says which one is wrong.
+   - Changing any of the three fields means checking again.
+2. **Lesson.** Fill in the topic, the learning outcomes (comma-separated) and the age group, and choose a language. Choose **Ideas** or **Lesson Plan**; a lesson plan also asks for the class time in minutes and an optional location.
+3. **Generate.** The answer streams in already formatted. **Stop** cancels it.
+4. **Download** a DOCX or a PDF, or **Copy** the text. For Nepali, use DOCX.
+5. **History** keeps past answers in this browser. Click one to reopen it; **Clear** removes them all.
 
-Only the web container publishes a port. It forwards `/api` to the `api` container on the compose network.
+## The key
 
-## Configuration
-
-| Variable | Where | Default | What it does |
-| --- | --- | --- | --- |
-| `GEMINI_MODEL` | backend | `gemini-3.6-flash` | The model to call. `GET /api/options` reports it and the page shows it under the button. |
-| `ALLOWED_ORIGINS` | backend | `http://localhost:3000` | Comma-separated origins for CORS, only needed if a browser calls the API from another origin. |
-| `API_URL` | frontend | `http://localhost:8000` | Where `/api` is forwarded. `next build` fixes it, so set it at build time (the compose file passes `http://api:8000`). |
-
-## Using it
-
-1. Paste your Gemini API key. It stays in that tab's memory only; reloading the page clears it.
-2. Fill in the topic, the learning outcomes (comma-separated) and the age group. Choose **Ideas** or **Lesson Plan**. A lesson plan also asks for the class time in minutes and an optional location.
-3. Press **Generate**. The answer streams in; **Stop** cancels it.
-4. Download it as DOCX or PDF. For Nepali, use DOCX.
-5. Past answers appear under **History**, in this browser only. **Clear** removes them.
+The key lives only in the open tab. It is sent to this app's own server in a header with each check or generation, passed to the provider for that one call, and never logged, stored, or written to history. Reloading the page clears it. The provider and model are remembered in the browser for convenience.
