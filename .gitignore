@@ -174,3 +174,8 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
+# The frontend keeps its own code in src/lib; the Python "lib/" rule above is for build output
+!frontend/src/lib/
+
+# Browser-check screenshots
+.playwright-mcp/
