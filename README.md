@@ -1,78 +1,63 @@
 # STEAM Integration Generator
 
-Generates creative **STEAM** (Science, Technology, Engineering, Arts, Mathematics) integration ideas, or a full **5E lesson plan**, for a topic, learning outcomes and an age group, using the Google Gemini API. A web app: a FastAPI backend and a Next.js frontend.
+Generates creative **STEAM** (Science, Technology, Engineering, Arts, Mathematics) integration ideas, or a full **5E lesson plan**, for a topic, learning outcomes and an age group. One Next.js app; you choose the AI provider and model, and bring your own key.
 
 This is a fork of [rajat-ed/steam-integration-generator](https://github.com/rajat-ed/steam-integration-generator) (MIT). The original author is credited in the page footer.
 
 ## Features
 
-- **Ideas or a lesson plan:** STEAM integration ideas, or a 5E lesson plan (Engage, Explore, Explain, Elaborate, Evaluate) for a class time and a location.
-- **Streaming:** the answer appears as the model writes it.
-- **English or Nepali output:** the model writes in the chosen language directly.
-- **Export to DOCX or PDF:** with headings, bold, italic and bullets. PDF cannot show Nepali letters; use DOCX for those, and the page says so.
-- **History:** past answers are kept in your browser (localStorage), never on the server.
-- **Bring your own key:** you paste your Gemini API key into the page. It stays in that tab's memory and goes to this app's API with each request, which uses it for that call only and never stores or logs it.
+- **Ideas or a lesson plan:** STEAM integration ideas, or a 5E lesson plan (Engage, Explore, Explain, Elaborate, Evaluate) for a class time and a location. The prompts are the original app's.
+- **Any provider, any model:** OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, Mistral, DeepSeek, xAI or Together AI. You type the exact model id.
+- **Key and model checked first:** before anything is generated, the server asks the provider whether the key works and the model exists. This spends no tokens, and the error says which of the two is wrong.
+- **Streaming:** the answer appears, already formatted, as the model writes it.
+- **English or Nepali:** the model writes in the chosen language directly.
+- **DOCX and PDF:** built in your browser from the same parsed lines you see on screen, so the files match the preview. PDF cannot show Nepali letters; DOCX can, and the page says so.
+- **History:** past answers stay in your browser (localStorage). The provider and model are remembered; the key never is.
 
 ## Quick start
 
-You need [uv](https://docs.astral.sh/uv/), Node.js 26 with [pnpm](https://pnpm.io/), and a [Gemini API key](https://aistudio.google.com/app/apikey).
+You need Node.js 26 (see `.nvmrc`), pnpm 12, and an API key from one of the providers.
 
 ```sh
 git clone git@github.com:karkinirajan/steam-integration-generator.git
 cd steam-integration-generator
-
-# terminal 1: the API on http://localhost:8000 (docs at /docs)
-cd backend && uv sync && uv run fastapi dev app/main.py
-
-# terminal 2: the web app on http://localhost:3000
-cd frontend && pnpm install && pnpm dev
+pnpm install
+pnpm dev          # http://localhost:3000
 ```
 
-Or with Docker: `docker compose up --build`, then open http://localhost:3000.
+Production: `pnpm build && pnpm start`, or `docker build -t steam-generator . && docker run -p 3000:3000 steam-generator`.
 
-## Configuration
-
-| Variable | Where | Default | What it does |
-| --- | --- | --- | --- |
-| `GEMINI_MODEL` | backend | `gemini-3.6-flash` | The model to call. |
-| `ALLOWED_ORIGINS` | backend | `http://localhost:3000` | Comma-separated browser origins allowed by CORS (only needed if the browser calls the API directly). |
-| `API_URL` | frontend | `http://localhost:8000` | Where Next.js forwards `/api`. Fixed at `next build` time; the Docker image takes it as a build argument. |
-
-There is no server-side Gemini key: every request uses the caller's own key.
+There is nothing to configure: no server-side keys and no environment variables.
 
 ## Project structure
 
 ```text
-backend/                FastAPI service (uv, Python 3.14)
-  app/main.py             App factory and CORS
-  app/api/                HTTP layer: routes, request/response schemas, the key header
-  app/core/               Domain logic, no HTTP: prompts, form validation, the Gemini call, the Markdown parser, DOCX/PDF writers
-  tests/                  pytest suite, and the mutation checks (tests/mutation)
-frontend/               Next.js 16 app (TypeScript, Tailwind v4)
-  src/app/                Layout and page
-  src/components/         Generator (form, streaming, export, history) and ResultView
-  src/lib/                API client, SSE parser, history storage
-docs/                   The guide, plans, the work log, and sample exports from the old version
-docker-compose.yml      api + web
+src/app/                  The page, and the two route handlers
+  api/verify/route.ts       POST: check a key and a model with the provider
+  api/generate/route.ts     POST: stream the answer as Server-Sent Events
+src/components/           Generator (state), CredentialsPanel, LessonForm, ResultPanel, ResultView, HistoryPanel
+src/lib/core/             Shared by page and server: providers, form validation, prompts, the Markdown parser
+src/lib/server/           Server only: the model call (Vercel AI SDK), the key/model check, error messages, request helpers
+src/lib/                  Browser: API client, SSE parser, DOCX/PDF export, history
+docs/                     The guide
 ```
 
 ## Documentation
 
 The guide in [docs/](docs/README.md) has three chapters: getting started, architecture, and testing and quality. [VERSIONS.md](VERSIONS.md) lists the versions used and how they were checked.
 
-## Testing
+## Checks
 
 ```sh
-cd backend && uv run ruff check . && uv run mypy app && uv run pytest -q
-cd frontend && pnpm lint && pnpm typecheck && pnpm test && pnpm build
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
 The tests do not touch the network.
 
 ## Known limits
 
-- PDF export cannot draw Devanagari (Nepali). Use DOCX for Nepali output.
-- No rate limiting is built in. Each generation spends the caller's own quota, but `/api/export` needs no key; put the app behind a proxy that limits requests per IP before exposing it publicly.
+- PDF cannot draw Devanagari (Nepali). Use DOCX for Nepali output.
+- No rate limiting is built in. Every model call spends the caller's own key, but put the app behind a proxy that limits requests per IP before exposing it publicly.
 
 ## License
 
