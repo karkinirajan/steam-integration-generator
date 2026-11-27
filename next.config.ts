@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  images: { unoptimized: true },
   cacheComponents: true,
   // Do not write AGENTS.md (instructions for AI coding tools) into the project.
   agentRules: false,
